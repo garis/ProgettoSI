@@ -16,6 +16,7 @@ MAX_ASTEROIDS = 20
 MAX_ASTEROID_MASS = 15
 MAX_ASTEROID_IMPULSE = MAX_ASTEROID_MASS * 6
 MAX_ASTEROID_ROTATION = 5
+SHIP_TORQUE_LIMIT = 80
 SHIP_DIM = 20
 SENSOR_RANGE = 25
 SENSOR_DISTANCE = 20
@@ -209,14 +210,17 @@ def move_rotate_ship(ship):
     direction = ship.position - ship_last_position
     ship_angle_direction = math.atan2(direction.y, direction.x)
 
-    current_Error = ship_angle_direction - ship.angle
+    current_error = ship_angle_direction - ship.angle
 
-    #integral = integral + current_Error
-    deriv = current_Error - last_error
-    last_error = current_Error
+    #integral = integral + current_error
+    deriv = current_error - last_error
+    last_error = current_error
 
-    #ship.torque = current_Error * P_FACTOR + integral * I_FACTOR + deriv * D_FACTOR
-    ship.torque = current_Error * P_FACTOR + deriv * D_FACTOR
+    #ship.torque = current_error * P_FACTOR + integral * I_FACTOR + deriv * D_FACTOR
+    torque = current_error * P_FACTOR + deriv * D_FACTOR
+    if(torque > SHIP_TORQUE_LIMIT):
+        torque = SHIP_TORQUE_LIMIT
+    ship.torque = torque
     ship_last_position = ship.position
 
 def move_with_mouse(position, bodysim):
