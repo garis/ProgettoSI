@@ -37,6 +37,8 @@ COLLISION_TYPE = {
 
 x = 0
 
+ship_last_position = 0
+
 
 def add_collision():
     global x
@@ -86,6 +88,8 @@ def add_ship(space):
     """create ship"""
     body = pymunk.Body(10, 10)
     body.position = (SCREENX / 2, SCREENY / 2)
+    global ship_last_position
+    ship_last_position = body.position
     segment1 = pymunk.Segment(body, (SHIP_DIM, 0),
                               (-SHIP_DIM, SHIP_DIM), SHIP_DIM / 8)
     segment2 = pymunk.Segment(body, (SHIP_DIM, 0),
@@ -171,13 +175,49 @@ def ship_poke_around(space, ship, screen):
 
             # apply sensor response
             if SHIP_AI[i * 4] == 1:
-                ship.torque = SHIP_AI[1 + i * 4] * norm
+                #ship.torque = SHIP_AI[1 + i * 4] * norm
                 ship.apply_force_at_local_point(
                     (SHIP_AI[2 + i * 4] * norm, SHIP_AI[3 + i * 4] * norm), (0, 0))
 
         pygame.draw.circle(screen, (255, 255, 255),
                            ((int)(sensor_pos[0]), (int)(sensor_pos[1])), SENSOR_RANGE, 1)
 
+last_error = 0
+#integral = 0
+P_FACTOR = 1.2
+#I_FACTOR = 0
+D_FACTOR = 400
+
+
+def move_rotate_ship(ship):
+    """rotate the ship according the trajectory"""
+    """
+    integral += currentError * timeFrame;
+    var deriv = (currentError - lastError) / timeFrame;
+    lastError = currentError;
+    return currentError * pFactor
+        + integral * iFactor
+        + deriv * dFactor;"""
+    global ship_last_position
+
+    global last_error
+    #global integral
+    global P_FACTOR
+    #global I_FACTOR
+    global D_FACTOR
+
+    direction = ship.position - ship_last_position
+    ship_angle_direction = math.atan2(direction.y, direction.x)
+
+    current_Error = ship_angle_direction - ship.angle
+
+    #integral = integral + current_Error
+    deriv = current_Error - last_error
+    last_error = current_Error
+
+    #ship.torque = current_Error * P_FACTOR + integral * I_FACTOR + deriv * D_FACTOR
+    ship.torque = current_Error * P_FACTOR + deriv * D_FACTOR
+    ship_last_position = ship.position
 
 def move_with_mouse(position, bodysim):
     """move objectSim to the position"""
@@ -269,6 +309,7 @@ def main(argv):
         manage_asteroid(balls, space)
         #move_with_mouse(pygame.mouse.get_pos(), ship)
         ship_poke_around(space, ship, screen)
+        move_rotate_ship(ship)
 
         # game simulation
         space.step(1 / 25.0)

@@ -13,7 +13,7 @@ def main():
         os.path.basename(__file__), "test.py --limit 2000 --string asfgsaf")
     try:
         proc = []
-        for i in range(0, 8):
+        for i in range(0, 1):
             loc_proc = Process(target=testrun, args=(command,))
             proc.append(loc_proc)
             proc[i].start()
