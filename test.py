@@ -83,7 +83,7 @@ def add_meteor(space):
 def add_ship(space):
     """create ship"""
     body = pymunk.Body(10, 10)
-    body.position = (SCREENX / 2, SCREENY / 2)
+    body.position = (SCREENX / 4, SCREENY / 4)
     global ship_last_position
     ship_last_position = body.position
     segment1 = pymunk.Segment(body, (SHIP_DIM, 0),
@@ -166,9 +166,13 @@ def ship_poke_around(space, ship, screen):
             sensor_pos, SENSOR_RANGE, custom_filter)
         if var is not None:
             new_position = pymunk.pygame_util.to_pygame(var.point, screen)
-            pygame.draw.circle(screen, (255, 0, 0), new_position, 5, 1)
 
-            norm = (var.distance / SENSOR_RANGE)
+            delta = ship.position - new_position
+            norm = (SENSOR_DISTANCE + SENSOR_RANGE) / \
+                math.sqrt(delta[0] * delta[0] + delta[1] * delta[1])
+
+            pygame.draw.circle(screen, (255, 0, 0),
+                               new_position, int(norm * 8), 1)
 
             # apply sensor response
             if SHIP_AI[i * 4] == 1:
@@ -258,7 +262,7 @@ def main(argv):
     string = "Q"
 
     options, remainder = getopt.getopt(
-        argv, 's:l', ['file=', 'limit='])
+        argv, 'f:l', ['file=', 'limit='])
     for opt, arg in options:
         if opt in '--limit':
             limit = (int)(arg)
@@ -271,17 +275,19 @@ def main(argv):
     try:
         in_file = open(string, "r")
     except:
+        print "Error opening file: " + string
         sys.exit(-10)
 
     text = in_file.read().split(";")
     in_file.close()
     for j in range(0, len(text) - 1):
-        if math.fmod(j, 5) == 0:
+        if math.fmod(j, 4) == 0:
             SHIP_AI[j] = int(text[j])
         else:
             SHIP_AI[j] = (int(text[j]) - 127) / 10
 
     print "Simulation of", string, "running for", limit, "iterations"
+    print SHIP_AI
 
     screen = pygame.display.set_mode((SCREENX, SCREENX))
     pygame.display.set_caption("Tests")
