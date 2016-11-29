@@ -5,6 +5,7 @@ import math
 import random
 import sys
 import getopt
+import os
 
 import pygame
 import pymunk
@@ -16,7 +17,7 @@ MAX_ASTEROIDS = 20
 MAX_ASTEROID_MASS = 15
 MAX_ASTEROID_IMPULSE = MAX_ASTEROID_MASS * 6
 MAX_ASTEROID_ROTATION = 5
-SHIP_TORQUE_LIMIT = 80
+SHIP_TORQUE_LIMIT = 65
 SHIP_DIM = 20
 SENSOR_RANGE = 25
 SENSOR_DISTANCE = 20
@@ -36,15 +37,9 @@ COLLISION_TYPE = {
     "OTHER": 3
 }
 
-x = 0
+COLLISIONS = 0
 
 ship_last_position = 0
-
-
-def add_collision():
-    global x
-    x = x + 1
-    return x
 
 
 def add_meteor(space):
@@ -110,7 +105,8 @@ def add_ship(space):
     def collision_event(_arb, self, _space):
         """avoid collision between border and asteroid'"""
         # print "COLLISION", add_collision()
-        add_collision()
+        global COLLISIONS
+        COLLISIONS = COLLISIONS + 1
         return True
 
     collision = space.add_collision_handler(
@@ -218,10 +214,11 @@ def move_rotate_ship(ship):
 
     #ship.torque = current_error * P_FACTOR + integral * I_FACTOR + deriv * D_FACTOR
     torque = current_error * P_FACTOR + deriv * D_FACTOR
-    if(torque > SHIP_TORQUE_LIMIT):
+    if torque > SHIP_TORQUE_LIMIT:
         torque = SHIP_TORQUE_LIMIT
     ship.torque = torque
     ship_last_position = ship.position
+
 
 def move_with_mouse(position, bodysim):
     """move objectSim to the position"""
@@ -254,22 +251,35 @@ def manage_asteroid(balls, space):
 def main(argv):
     """main loop"""
     print "Usage:"
-    print "--string:    the spaceship to simulate"
-    print "--limit:     frame limit"
+    print "--file:  the file containing the spaceship to simulate"
+    print "--limit: frame limit"
 
     limit = -1
     string = "Q"
 
     options, remainder = getopt.getopt(
-        argv, 's:l', ['string=', 'limit='])
+        argv, 's:l', ['file=', 'limit='])
     for opt, arg in options:
         if opt in '--limit':
             limit = (int)(arg)
-        if opt in '--string':
+        if opt in '--file':
             string = arg
 
     if limit == -1:
         limit = 999999999
+
+    try:
+        in_file = open(string, "r")
+    except:
+        sys.exit(-10)
+
+    text = in_file.read().split(";")
+    in_file.close()
+    for j in range(0, len(text) - 1):
+        if math.fmod(j, 5) == 0:
+            SHIP_AI[j] = int(text[j])
+        else:
+            SHIP_AI[j] = (int(text[j]) - 127) / 10
 
     print "Simulation of", string, "running for", limit, "iterations"
 
@@ -325,8 +335,17 @@ def main(argv):
         # print clock.get_fps()
         iteration_count = iteration_count + 1
 
-    sys.exit(0)
+    save_and_exit(string, COLLISIONS)
 
+
+def save_and_exit(filename, result):
+    """save result on file"""
+    in_file = open(filename, "r")
+    line = in_file.readline()
+    myfile = open(filename, "w+")
+    myfile.write(str(line))
+    myfile.write(str(result))
+    sys.exit(1)
 
 if __name__ == '__main__':
     main(sys.argv[1:])
