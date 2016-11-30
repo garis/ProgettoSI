@@ -7,13 +7,12 @@ import time
 import sys
 import random
 import operator
-import math
 
-TOTAL_POPULATION = 4
-NUMBER_THREADS = 4
+TOTAL_POPULATION = 8
+NUMBER_THREADS = 8
 FEATURES = 4 * 5
 
-SELECTED = TOTAL_POPULATION * 0.3
+SELECTED = int(TOTAL_POPULATION * 0.5)
 
 
 def main():
@@ -79,6 +78,16 @@ def evolution(generation, individualnumber, features):
     # ora avviene la riproduzione in cui solo i primi SELECTED membri vengono
     # usati per RICOMBINARE nuovi membri
     global SELECTED
+    for i in range(0, SELECTED * 10):
+        ship1 = random.randint(0, SELECTED)
+        ship2 = random.randint(0, SELECTED)
+        while ship2 != ship1:
+            ship2 = random.randint(0, SELECTED)
+        j = random.randint(0, FEATURES)
+
+        temp = table[ship1][j]
+        table[ship1][j] = table[ship2][j]
+        table[ship2][j] = temp
 
     # ora avvengono le MUTAZIONI
 
