@@ -11,14 +11,14 @@ import pygame
 import pymunk
 import pymunk.pygame_util
 
-SCREENX = 600
-SCREENY = 600
+SCREENX = 400
+SCREENY = 400
 MAX_ASTEROIDS = 20
 MAX_ASTEROID_MASS = 15
-MAX_ASTEROID_IMPULSE = MAX_ASTEROID_MASS * 6
+MAX_ASTEROID_IMPULSE = int(MAX_ASTEROID_MASS * 3.2)
 MAX_ASTEROID_ROTATION = 5
 SHIP_TORQUE_LIMIT = 65
-SHIP_DIM = 20
+SHIP_DIM = 17
 SENSOR_RANGE = 25
 SENSOR_DISTANCE = 20
 NUM_SENSORS = 5
@@ -44,7 +44,7 @@ ship_last_position = 0
 
 def add_meteor(space):
     """create meteor"""
-    mass = random.randint(7, MAX_ASTEROID_MASS)
+    mass = random.randint(MAX_ASTEROID_MASS/3, MAX_ASTEROID_MASS)
     radius = mass
     inertia = pymunk.moment_for_circle(mass, 0, radius, (0, 0))
     body = pymunk.Body(mass, inertia)
@@ -154,6 +154,8 @@ def ship_poke_around(space, ship, screen):
     """check collision around ship in space all into the screen area"""
     # sensori
     sensor_pos = [0, 0]
+    #first sensor have x1.7 range because is in front
+    sensorrange=int(SENSOR_RANGE*1.7)
     custom_filter = pymunk.ShapeFilter(mask=pymunk.ShapeFilter.ALL_MASKS ^ 0x2)
     for i in range(0, NUM_SENSORS):
         # like this there will be always a sensor in the head
@@ -163,12 +165,12 @@ def ship_poke_around(space, ship, screen):
         sensor_pos[1] = (-math.sin(angle) + math.cos(angle)) * \
             SENSOR_DISTANCE + ship.position[1]
         var = space.point_query_nearest(
-            sensor_pos, SENSOR_RANGE, custom_filter)
+            sensor_pos, sensorrange, custom_filter)
         if var is not None:
             new_position = pymunk.pygame_util.to_pygame(var.point, screen)
 
             delta = ship.position - new_position
-            norm = (SENSOR_DISTANCE + SENSOR_RANGE) / \
+            norm = (SENSOR_DISTANCE + sensorrange) / \
                 math.sqrt(delta[0] * delta[0] + delta[1] * delta[1])
 
             pygame.draw.circle(screen, (255, 0, 0),
@@ -181,11 +183,12 @@ def ship_poke_around(space, ship, screen):
                     (SHIP_AI[2 + i * 4] * norm, SHIP_AI[3 + i * 4] * norm), (0, 0))
 
         pygame.draw.circle(screen, (255, 255, 255),
-                           ((int)(sensor_pos[0]), (int)(sensor_pos[1])), SENSOR_RANGE, 1)
+                           ((int)(sensor_pos[0]), (int)(sensor_pos[1])), sensorrange, 1)
+        sensorrange=SENSOR_RANGE
 
 last_error = 0
 #integral = 0
-P_FACTOR = 1.2
+P_FACTOR = 10
 #I_FACTOR = 0
 D_FACTOR = 400
 
@@ -248,8 +251,11 @@ def manage_asteroid(balls, space):
             balls_to_remove.append(ball)
 
     for ball in balls_to_remove:
-        space.remove(ball, ball.body)
-        balls.remove(ball)
+        try:#strange error
+            space.remove(ball, ball.body)
+            balls.remove(ball)
+        except KeyError:
+            print "ERRORE STRANO"
 
 
 def main(argv):
@@ -284,7 +290,7 @@ def main(argv):
         if math.fmod(j, 4) == 0:
             SHIP_AI[j] = int(text[j])
         else:
-            SHIP_AI[j] = (int(text[j]) - 127) / 10
+            SHIP_AI[j] = (int(text[j]) - 256) / 14
 
     print "Simulation of", string, "running for", limit, "iterations"
     print SHIP_AI
@@ -333,7 +339,7 @@ def main(argv):
 
         # game simulation
         space.step(1 / 25.0)
-        clock.tick(1000)
+        #clock.tick(60)
 
         # game draw
         space.debug_draw(draw_options)

@@ -8,11 +8,11 @@ import sys
 import random
 import operator
 
-TOTAL_POPULATION = 8
-NUMBER_THREADS = 8
+TOTAL_POPULATION = 32
+NUMBER_THREADS = 16
 FEATURES = 4 * 5
 
-SELECTED = int(TOTAL_POPULATION * 0.5)
+SELECTED = 8
 
 
 def main():
@@ -32,12 +32,14 @@ def main():
         createfiles()
         lastgen = 0
 
+    file_stats = open("tmp/stats.csv", "a")
+
     while True:
         command = 'python ' + os.path.realpath(__file__).replace(
-            os.path.basename(__file__), ("test.py --limit 2000 --file tmp/GEN_" + str(lastgen).zfill(3) + "_"), )
+            os.path.basename(__file__), ("test.py --limit 3500 --file tmp/GEN_" + str(lastgen).zfill(3) + "_"), )
         proc = []
         for i in range(0, TOTAL_POPULATION):
-            real_command = command + str(i).zfill(3)  # + " >> /dev/null"
+            real_command = command + str(i).zfill(3) + " >> /dev/null"
             loc_proc = Process(target=testrun, args=(real_command,))
             proc.append(loc_proc)
             # proc[i].start()
@@ -51,11 +53,15 @@ def main():
                 proc[cycles * NUMBER_THREADS + i].join()
                 completed = completed + 1
             cycles = cycles + 1
+        lastgen = evolution(lastgen, TOTAL_POPULATION, FEATURES, file_stats)
 
-        lastgen = evolution(lastgen, TOTAL_POPULATION, FEATURES)
+        file_stats.write("\n")
+        file_stats.flush()
+
+    file_stats.close()
 
 
-def evolution(generation, individualnumber, features):
+def evolution(generation, individualnumber, features, file_stats=None):
     """prende i file e genera i dati per la successiva generazione"""
     # carico tutti i file in una tabella e gli ordina per numero di collisioni
     # crescente
@@ -67,7 +73,6 @@ def evolution(generation, individualnumber, features):
         print in_file.name
         data = in_file.readline()
         score = in_file.readline()
-        #lines.append(str(score + "/" + data).replace("\n", ""))
         vettore = str(data).split(";")
         for j in range(0, len(vettore) - 1):
             table[i][j] = int(vettore[j])
@@ -75,21 +80,41 @@ def evolution(generation, individualnumber, features):
 
     table = sorted(table, key=operator.itemgetter(features))
 
+    # write statistics on file (only the score)
+    if file_stats is not None:
+        file_stats.write(str(generation) + ";")
+        for i in range(0, individualnumber):
+            file_stats.write(str(table[i][features]) + ";")
+
     # ora avviene la riproduzione in cui solo i primi SELECTED membri vengono
     # usati per RICOMBINARE nuovi membri
+    # preservando il migliore (per quello si parte da uno)
     global SELECTED
-    for i in range(0, SELECTED * 10):
-        ship1 = random.randint(0, SELECTED)
-        ship2 = random.randint(0, SELECTED)
-        while ship2 != ship1:
-            ship2 = random.randint(0, SELECTED)
-        j = random.randint(0, FEATURES)
 
-        temp = table[ship1][j]
-        table[ship1][j] = table[ship2][j]
-        table[ship2][j] = temp
+    # salvo i migliori 2
+    for i in range(0, 2):
+        for j in range(0, FEATURES):
+            table[TOTAL_POPULATION - i - 1][j] = table[i][j]
 
-    # ora avvengono le MUTAZIONI
+    #accoppio i SELECTED con un altro SELECTED mischiando al 50% i dati di ognuno
+    for i in range(2, SELECTED+2):
+        target = random.randint(0, SELECTED)
+        while target != i-2:
+            target = random.randint(0, SELECTED)
+
+        for j in range(0, FEATURES):
+            if controlrandomTrueFalse() == 1:
+                temp = table[i][j]
+                table[i][j] = table[target][j]
+                table[target][j] = temp
+
+    # nuovi individui random
+    for i in range(SELECTED+2, TOTAL_POPULATION - 2):
+        data = random_spaceship()
+        for j in range(0, FEATURES):
+            table[i][j] = data[j]
+
+    # ora avvengono le MUTAZIONI....ma ora non ho voglia.....
 
     # e' tempo di scrivere i nuovi file da testare per la generazione
     # successiva
@@ -99,7 +124,7 @@ def evolution(generation, individualnumber, features):
                         "_" + str(i).zfill(3), "w")
         for j in range(0, features):
             out_file.write(str(table[i][j]) + ";")
-        out_file.write("S\n")
+        out_file.write("\n")
         out_file.close()
     return generation
 
@@ -111,7 +136,7 @@ def scanforgenerationsfiles():
         for file in os.listdir(os.path.realpath(__file__).replace(os.path.basename(__file__), ("/tmp"),)):
             files.append(file)
         files.sort()
-        lastgen = str(files[len(files) - 1]).split("_")
+        lastgen = str(files[len(files) - 2]).split("_")
         return lastgen[1]
     except IndexError:
         return 1
@@ -122,19 +147,22 @@ def createfiles():
     for i in range(0, TOTAL_POPULATION):
         out_file = open("tmp/GEN_" + str(0).zfill(3) +
                         "_" + str(i).zfill(3), "w")
-        out_file.write(random_spaceship())
+        line = random_spaceship()
+        for j in range(0, len(line)):
+            out_file.write(str(line[j]))
+            out_file.write(";")
+        out_file.write("\n")
         out_file.close()
 
 
 def random_spaceship():
     """generate a random spaceship"""
-    line = ""
+    line = []
     for j in range(0, 5):
-        line = line + str(controlrandomTrueFalse(80)) + ";"
-        line = line + str(random.randint(0, 255)) + ";"
-        line = line + str(random.randint(0, 255)) + ";"
-        line = line + str(random.randint(0, 255)) + ";"
-    line = line + "S\n"
+        line.append(controlrandomTrueFalse(80))
+        line.append(random.randint(0, 512))
+        line.append(random.randint(0, 512))
+        line.append(random.randint(0, 512))
     return line
 
 
