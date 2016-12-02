@@ -1,30 +1,38 @@
 """control center"""
 #"./test.py --limit 100 --string asfgsaf"
 from multiprocessing import Process
-import subprocess
 import os
 import time
 import sys
 import random
 import operator
 import math
+import test
 
-SURVIVORS = 3
+###BUG###
+#tmp/stats.csv da ricontrollare
+#SPEED!!!!!
+
+SURVIVORS = 4
 CHILDS = SURVIVORS*2
-MUTATIONS = 7
+MUTATIONS = 12
 POPULATION = SURVIVORS + CHILDS + MUTATIONS
 
 NUMBER_THREADS = 8
 FEATURES = 3 * 5
-TOTAL_BIT_GENOTYPE =(9*3+1)*5
+TOTAL_BIT_GENOTYPE = (9*2+1)*5
+
+MUTATION_PROBABILITY = 2  #%
 
 SELECTED = 8
+
+LIMIT = 3500
 
 
 def main():
     """main"""
 
-    global POPULATION, NUMBER_THREADS, FEATURES,SURVIVORS, CHILDS, MUTATIONS,TOTAL_BIT_GENOTYPE
+    global POPULATION, NUMBER_THREADS, FEATURES,SURVIVORS, CHILDS, MUTATIONS,TOTAL_BIT_GENOTYPE,MUTATION_PROBABILITY
 
     lastgen = int(scanforgenerationsfiles())
     print "Last generation found: #" + str(lastgen)
@@ -33,7 +41,7 @@ def main():
     lastgen = lastgen - 1
 
     if lastgen > 0:
-        evolution(lastgen, POPULATION, FEATURES, SURVIVORS, CHILDS, MUTATIONS,TOTAL_BIT_GENOTYPE)
+        evolution(lastgen, POPULATION, FEATURES, SURVIVORS, CHILDS, MUTATIONS, TOTAL_BIT_GENOTYPE, MUTATION_PROBABILITY)
     else:
         createfiles()
         lastgen = 0
@@ -43,12 +51,11 @@ def main():
     while True:
         command = 'python ' + os.path.realpath(__file__).replace(
             os.path.basename(__file__), ("test.py --limit 3500 --file tmp/GEN_" + str(lastgen).zfill(3) + "_"), )
+        path="tmp/GEN_" + str(lastgen).zfill(3) + "_"
         proc = []
         for i in range(0, POPULATION):
-            real_command = command + str(i).zfill(3) + " >> /dev/null"
-            loc_proc = Process(target=testrun, args=(real_command,))
+            loc_proc = Process(target=testrun, args=(path + str(i).zfill(3),LIMIT,))
             proc.append(loc_proc)
-            # proc[i].start()
 
         cycles = 0
         completed = 0
@@ -60,7 +67,7 @@ def main():
                 completed = completed + 1
             cycles = cycles + 1
             
-        lastgen = evolution(lastgen, POPULATION, FEATURES, SURVIVORS, CHILDS, MUTATIONS,TOTAL_BIT_GENOTYPE, file_stats)
+        lastgen = evolution(lastgen, POPULATION, FEATURES, SURVIVORS, CHILDS, MUTATIONS,TOTAL_BIT_GENOTYPE,MUTATION_PROBABILITY, file_stats)
 
         file_stats.write("\n")
         file_stats.flush()
@@ -68,7 +75,7 @@ def main():
     file_stats.close()
 
 
-def evolution(generation, individualnumber, features, survivors, childs, mutations, bits, file_stats=None):
+def evolution(generation, individualnumber, features, survivors, childs, mutations, bits, mutations_prob, file_stats=None):
     """prende i file e genera i dati per la successiva generazione"""
     # carico tutti i file in una tabella e gli ordina per numero di collisioni
     # crescente
@@ -79,7 +86,6 @@ def evolution(generation, individualnumber, features, survivors, childs, mutatio
     table = [[0 for i in range(3)]for j in range(individualnumber)]
     for i in range(0, individualnumber):
         in_file = open(filename + str(i).zfill(3), "r")
-        print in_file.name
         data = in_file.readline()
         score = in_file.readline()
         vettore = str(data).split(";")
@@ -105,49 +111,77 @@ def evolution(generation, individualnumber, features, survivors, childs, mutatio
     for i in range(0, individualnumber):
         score_sum = score_sum + table[i][1]
         table[i][2] = score_sum
+        #print table[i][0], table[i][2]
 
     # SURVIVORS
     print "SURVIVORS"
+    inserted=[]
     newtable = [[0 for i in range(1)]for j in range(individualnumber)]
     for i in range(0, survivors):
         selection = random.randint(0, int(score_sum))
-        genotype = 0
-         #if nothing is selected genotype = 0 give the right choice
-        for j in range(1, individualnumber):
-            if table[j-1][2] >= selection and table[j][2] <= selection:
+        genotype = individualnumber-1
+        #print "SEL", selection
+        for j in range(0, individualnumber):
+            if table[j][2] >= selection and j not in inserted:
                 genotype = j
                 break
-        #meh.......ammette ripetizioni ma che ci vuoi fa'
+        #print "GENI", genotype, table[genotype][2]
+        inserted.append(genotype)
         newtable[i][0] = table[genotype][0]
-    
+
+    #for i in range(0, survivors):
+    #    print newtable[i][0]
+    #print ""
+
     # RECOMBINATION
     print "RECOMBINATION"
     for i in range(survivors, survivors+childs-1, 2):
         genotype1 = 0
         genotype2 = 0
-        while genotype1 != genotype2:
+        while genotype1 == genotype2:
             selection = random.randint(0, int(score_sum))
             for j in range(1, individualnumber):
-                if table[j-1][2] >= selection and table[j][2] <= selection:
+                if table[j][2] >= selection:
                     genotype1 = j
                     break
             selection = random.randint(0, int(score_sum))
             for j in range(1, individualnumber):
-                if table[j-1][2] >= selection and table[j][2] <= selection:
+                if table[j][2] >= selection:
                     genotype2 = j
                     break
-        midpoint=random.randint(0, bits-2)
+        midpoint = random.randint(0, bits-2)
+        #print "GENI", genotype1, genotype2
         newtable[i][0] = (str(table[genotype1][0]))[0:midpoint]+(str(table[genotype2][0]))[midpoint:bits-1]
         newtable[i+1][0] = (str(table[genotype2][0]))[0:midpoint]+(str(table[genotype1][0]))[midpoint:bits-1]
+
+    #for i in range(survivors, survivors+childs):
+    #    print newtable[i][0]
+    #print ""
 
     #RANDOM FOR NOW (BUT MUST BE DONE THE MUTATIONS IN HERE)
     print "MUTATIONS"
     for i in range(survivors+childs, survivors+childs+mutations):
+        #seleziona un esemplare a caso
+        genotype = 0
+        selection = random.randint(0, int(score_sum))
+        for j in range(1, individualnumber):
+            if table[j][2] >= selection:
+                genotype = j
+                break
+
+        #lo inserisce nella nuova lista mutado a caso
         stringa = ""
         for j in range(0, bits):
-            stringa = str(stringa)+str(controlrandomTrueFalse())
+            singlebit = bool(int((str(table[genotype][0]))[j:j+1]))
+            if controlrandomTrueFalse(mutations_prob):
+                singlebit = not singlebit
+            stringa = str(stringa)+str(int(singlebit))
         newtable[i][0] = stringa
 
+    #for i in range(survivors+childs, survivors+childs+mutations):
+    #    print newtable[i][0]
+    #print ""
+    
     # e' tempo di scrivere i nuovi file da testare per la generazione
     # successiva
     generation = generation + 1
@@ -167,51 +201,11 @@ def evolution(generation, individualnumber, features, survivors, childs, mutatio
         out_file.write("\n")
         out_file.close()
 
+    #for i in range(0, individualnumber):
+    #    print newtable[i][0]
+    #print ""
+
     return generation
-
-""""
-    # salvo i migliori 2
-    for i in range(0, 2):
-        for j in range(0, FEATURES):
-            table[TOTAL_POPULATION - i - 1][j] = table[i][j]
-
-    #accoppio i SELECTED con un altro SELECTED mischiando al 50% i dati di ognuno
-    for i in range(2, SELECTED+2):
-        target = random.randint(0, SELECTED)
-        while target != i-2:
-            target = random.randint(0, SELECTED)
-
-        for j in range(0, FEATURES):
-            if controlrandomTrueFalse() == 1:
-                temp = table[i][j]
-                table[i][j] = table[target][j]
-                table[target][j] = temp
-
-    # nuovi individui random
-    for i in range(SELECTED+2, TOTAL_POPULATION - 2):
-        data = random_spaceship()
-        for j in range(0, FEATURES):
-            table[i][j] = data[j]
-
-    # ora avvengono le MUTAZIONI....ma ora non ho voglia.....
-"""
-"""
-    # e' tempo di scrivere i nuovi file da testare per la generazione
-    # successiva
-    generation = generation + 1
-    for i in range(0, individualnumber):
-        out_file = open("tmp/GEN_" + str(generation).zfill(3) +
-                        "_" + str(i).zfill(3), "w")
-        stringa=str(table[i][1])
-        for j in range(0, features):
-            ifmath.fmod(j, 3)==0:
-                out_file.write(str(int(stringa[], 2)). + ";")
-        out_file.write("\n")
-        out_file.close()
-    
-    return generation
-        """
-
 
 def scanforgenerationsfiles():
     """search for the last generation"""
@@ -253,11 +247,10 @@ def controlrandomTrueFalse(percent=50):
     return int(random.randrange(100) < percent)
 
 
-def testrun(str):
+def testrun(path, limit):
     """launch simulation"""
-    print str
-    subprocess.call(str, shell=True)
-
+    test.start(path, limit)
+    return None
 
 if __name__ == '__main__':
     START_TIME = time.time()

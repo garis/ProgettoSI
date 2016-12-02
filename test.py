@@ -45,7 +45,7 @@ ship_last_position = 0
 
 def add_meteor(space):
     """create meteor"""
-    mass = random.randint(MAX_ASTEROID_MASS/3, MAX_ASTEROID_MASS)
+    mass = random.randint(int(MAX_ASTEROID_MASS/2.5), MAX_ASTEROID_MASS)
     radius = mass
     inertia = pymunk.moment_for_circle(mass, 0, radius, (0, 0))
     body = pymunk.Body(mass, inertia)
@@ -179,9 +179,14 @@ def ship_poke_around(space, ship, screen):
 
             # apply sensor response
             if SHIP_AI[i * 3] == 1:
+                pygame.draw.circle(screen, (0, 255, 0),
+                               new_position, int(norm * 8), 1)
                 #ship.torque = SHIP_AI[1 + i * 4] * norm
                 ship.apply_force_at_local_point(
                     (SHIP_AI[1 + i * 3] * norm, SHIP_AI[2 + i * 3] * norm), (0, 0))
+            else:
+                pygame.draw.circle(screen, (255, 0, 0),
+                               new_position, int(norm * 8), 1)
 
         pygame.draw.circle(screen, (255, 255, 255),
                            ((int)(sensor_pos[0]), (int)(sensor_pos[1])), sensorrange, 1)
@@ -262,30 +267,22 @@ def manage_asteroid(balls, space):
             print "ERRORE STRANO"
 
 
-def main(argv):
+#def main(argv):
+def start(datafile, limitRun):
     """main loop"""
-    print "Usage:"
-    print "--file:  the file containing the spaceship to simulate"
-    print "--limit: frame limit"
+    #print "Usage:"
+    #print "--file:  the file containing the spaceship to simulate"
+    #print "--limit: frame limit"
 
-    limit = -1
-    string = "Q"
-
-    options, remainder = getopt.getopt(
-        argv, 'f:l', ['file=', 'limit='])
-    for opt, arg in options:
-        if opt in '--limit':
-            limit = (int)(arg)
-        if opt in '--file':
-            string = arg
+    limit = int(limitRun)
 
     if limit == -1:
         limit = 999999999
-
+    
     try:
-        in_file = open(string, "r")
+        in_file = open(str(datafile), "r")
     except:
-        print "Error opening file: " + string
+        print "Error opening file: " + datafile
         sys.exit(-10)
 
     text = in_file.read().split(";")
@@ -296,8 +293,8 @@ def main(argv):
         else:
             SHIP_AI[j] = (int(text[j]) - 256) / 14
 
-    print "Simulation of", string, "running for", limit, "iterations"
-    print SHIP_AI
+    #print "Simulation of", datafile, "running for", limit, "iterations"
+    #print SHIP_AI
 
     screen = pygame.display.set_mode((SCREENX, SCREENX))
     pygame.display.set_caption("Tests")
@@ -316,7 +313,7 @@ def main(argv):
     iteration_count = 0
 
     while iteration_count < limit:
-        for event in pygame.event.get():
+        """for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 sys.exit(0)
             elif event.type == pygame.KEYDOWN:
@@ -331,7 +328,7 @@ def main(argv):
                 elif event.key == pygame.K_LEFT:
                     ship.apply_impulse_at_local_point((-100, 0))
                 elif event.key == pygame.K_SPACE:
-                    ship.angular_velocity = 0
+                    ship.angular_velocity = 0"""
 
         screen.fill((0, 0, 0))
 
@@ -352,7 +349,7 @@ def main(argv):
         iteration_count = iteration_count + 1
 
     global DISTANCE
-    save_and_exit(string, float(DISTANCE/(COLLISIONS+1)))
+    save_and_exit(datafile, float(DISTANCE/(COLLISIONS+1)))
 
 
 def save_and_exit(filename, result):
@@ -364,5 +361,5 @@ def save_and_exit(filename, result):
     myfile.write(str(result))
     sys.exit(1)
 
-if __name__ == '__main__':
-    main(sys.argv[1:])
+#if __name__ == '__main__':
+#    main(sys.argv[1:])
