@@ -57,10 +57,10 @@ def main():
                 proc[cycles * NUMBER_THREADS + i].start()
             for i in range(0, NUMBER_THREADS):
                 proc[cycles * NUMBER_THREADS + i].join()
-                proc[cycles * NUMBER_THREADS + i].terminate()
                 completed = completed + 1
             cycles = cycles + 1
-        lastgen = evolution(lastgen, POPULATION, FEATURES, SURVIVORS, CHILDS, MUTATIONS,TOTAL_BIT_GENOTYPE)
+            
+        lastgen = evolution(lastgen, POPULATION, FEATURES, SURVIVORS, CHILDS, MUTATIONS,TOTAL_BIT_GENOTYPE, file_stats)
 
         file_stats.write("\n")
         file_stats.flush()
