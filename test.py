@@ -26,10 +26,10 @@ ANGLE_APERTURE = (2 * math.pi) / NUM_SENSORS
 WALL_THICKNESS = 10
 
 #   for every sensor:
-#   ON/OFF (0 or 1), TORQUE, IMPULSE (a vector like (x, x))
+#   ON/OFF (0 or 1), IMPULSE (a vector like (x, x))
 #SHIP_AI = [1, 0.2, -2, 2, 1, -0.2, -1, -2, 1, 0.2, 1, 2, 1, -0.2, 1, 2, 1, -0.2, 1, 2]
-SHIP_AI = [1, 0, -10, -10, 1, 0, -10, 10,
-           0, 0, 0, 0, 0, 0, 0, 0, 1, 0, -10, -10]
+SHIP_AI = [1, -10, -10, 1, -10, 10,
+           0, 0, 0, 0, 0, 0, 1, -10, -10]
 
 COLLISION_TYPE = {
     "ROCK": 1,
@@ -38,6 +38,7 @@ COLLISION_TYPE = {
 }
 
 COLLISIONS = 0
+DISTANCE = 0
 
 ship_last_position = 0
 
@@ -177,10 +178,10 @@ def ship_poke_around(space, ship, screen):
                                new_position, int(norm * 8), 1)
 
             # apply sensor response
-            if SHIP_AI[i * 4] == 1:
+            if SHIP_AI[i * 3] == 1:
                 #ship.torque = SHIP_AI[1 + i * 4] * norm
                 ship.apply_force_at_local_point(
-                    (SHIP_AI[2 + i * 4] * norm, SHIP_AI[3 + i * 4] * norm), (0, 0))
+                    (SHIP_AI[1 + i * 3] * norm, SHIP_AI[2 + i * 3] * norm), (0, 0))
 
         pygame.draw.circle(screen, (255, 255, 255),
                            ((int)(sensor_pos[0]), (int)(sensor_pos[1])), sensorrange, 1)
@@ -210,7 +211,10 @@ def move_rotate_ship(ship):
     #global I_FACTOR
     global D_FACTOR
 
+    global DISTANCE
+
     direction = ship.position - ship_last_position
+    DISTANCE=DISTANCE+math.sqrt(direction.x*direction.x+direction.y*direction.y)
     ship_angle_direction = math.atan2(direction.y, direction.x)
 
     current_error = ship_angle_direction - ship.angle
@@ -287,7 +291,7 @@ def main(argv):
     text = in_file.read().split(";")
     in_file.close()
     for j in range(0, len(text) - 1):
-        if math.fmod(j, 4) == 0:
+        if math.fmod(j, 3) == 0:
             SHIP_AI[j] = int(text[j])
         else:
             SHIP_AI[j] = (int(text[j]) - 256) / 14
@@ -347,7 +351,8 @@ def main(argv):
         # print clock.get_fps()
         iteration_count = iteration_count + 1
 
-    save_and_exit(string, COLLISIONS)
+    global DISTANCE
+    save_and_exit(string, float(DISTANCE/(COLLISIONS+1)))
 
 
 def save_and_exit(filename, result):
