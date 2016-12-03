@@ -89,7 +89,8 @@ def add_ship(space):
     global ship_last_position
     ship_last_position = body.position
 
-    convex_hull=pymunk.Poly(body, [pygame.math.Vector2(SHIP_DIM, 0,), pygame.math.Vector2(-SHIP_DIM, SHIP_DIM), pygame.math.Vector2(-SHIP_DIM, -SHIP_DIM)])
+    convex_hull = pymunk.Poly(body, [pygame.math.Vector2(
+        SHIP_DIM, 0,), pygame.math.Vector2(-SHIP_DIM, SHIP_DIM), pygame.math.Vector2(-SHIP_DIM, -SHIP_DIM)])
 
     convex_hull.elasticity = 0
     convex_hull.collision_type = COLLISION_TYPE["SHIP"]
@@ -198,7 +199,7 @@ def ship_poke_around(space, ship, screen):
             #target = pygame.math.Vector2(SHIP_AI[0 + i * 2] * norm+ship.position[0], SHIP_AI[1 + i * 2] * norm+ship.position[1])
             sens = pygame.math.Vector2(
                 SHIP_AI[0 + i * 2] * norm, SHIP_AI[1 + i * 2] * norm)
-            sens.rotate_ip(ship.angle*180/math.pi)
+            sens.rotate_ip(ship.angle * 180 / math.pi)
             target = sens + \
                 pygame.math.Vector2(ship.position[0], ship.position[1])
             pygame.draw.line(screen, (255, 128, 0), ship.position, target)
@@ -290,6 +291,13 @@ def start(datafile=None, limitRun=888888):
     # print "--file:  the file containing the spaceship to simulate"
     # print "--limit: frame limit"
 
+    pygame.init()
+    # initialize font; must be called after 'pygame.init()' to avoid 'Font not
+    # Initialized' error
+    myfont = pygame.font.SysFont("monospace", 15)
+
+    # render text
+
     limit = int(limitRun)
 
     global SHIP_AI
@@ -311,7 +319,7 @@ def start(datafile=None, limitRun=888888):
         SHIP_AI = [10, 10, 0, 0, 0, 0, 0, 0, 10, 10]
 
     print "Simulation of", datafile, "running for", limit, "iterations"
-    #print SHIP_AI
+    # print SHIP_AI
 
     screen = pygame.display.set_mode((SCREENX, SCREENX))
     pygame.display.set_caption("Tests")
@@ -359,11 +367,11 @@ def start(datafile=None, limitRun=888888):
 
         # game simulation
         space.step(1 / 30.0)
-        #clock.tick(30)
+        # clock.tick(30)
 
         # game draw
-        #space.debug_draw(draw_options)
-        draw(screen, ship, balls)
+        # space.debug_draw(draw_options)
+        draw(screen, ship, balls, myfont)
 
         pygame.display.flip()
         # print clock.get_fps()
@@ -373,24 +381,38 @@ def start(datafile=None, limitRun=888888):
     save_and_exit(datafile, float(DISTANCE / (COLLISIONS + 1)))
 
 
-def draw(screen, ship,meteors):
+def draw(screen, ship, meteors, myfont):
     """draw function, all the draw calls should go in here"""
     global SHIP_POINTS_LIST
 
-    point1 = pygame.math.Vector2((SHIP_POINTS_LIST[0])[0], (SHIP_POINTS_LIST[0])[1])
-    point1.rotate_ip(ship.angle*180/math.pi)
-    point2 = pygame.math.Vector2((SHIP_POINTS_LIST[1])[0], (SHIP_POINTS_LIST[1])[1])
-    point2.rotate_ip(ship.angle*180/math.pi)
-    point3 = pygame.math.Vector2((SHIP_POINTS_LIST[2])[0], (SHIP_POINTS_LIST[2])[1])
-    point3.rotate_ip(ship.angle*180/math.pi)
+    point1 = pygame.math.Vector2(
+        (SHIP_POINTS_LIST[0])[0], (SHIP_POINTS_LIST[0])[1])
+    point1.rotate_ip(ship.angle * 180 / math.pi)
+    point2 = pygame.math.Vector2(
+        (SHIP_POINTS_LIST[1])[0], (SHIP_POINTS_LIST[1])[1])
+    point2.rotate_ip(ship.angle * 180 / math.pi)
+    point3 = pygame.math.Vector2(
+        (SHIP_POINTS_LIST[2])[0], (SHIP_POINTS_LIST[2])[1])
+    point3.rotate_ip(ship.angle * 180 / math.pi)
     ship_points = ((point1[0] + ship.position[0], point1[1] + ship.position[1]),
-                   (point2[0] + ship.position[0], point2[1] + ship.position[1]),
+                   (point2[0] + ship.position[0],
+                    point2[1] + ship.position[1]),
                    (point3[0] + ship.position[0], point3[1] + ship.position[1]))
 
     pygame.draw.polygon(screen, (51, 153, 255), ship_points, 0)
 
     for ball in meteors:
-        pygame.draw.circle(screen,(128,128,128),(int(ball.body.position[0]),int(ball.body.position[1])),int(ball.radius),0)
+        pygame.draw.circle(screen, (128, 128, 128), (int(ball.body.position[
+            0]), int(ball.body.position[1])), int(ball.radius), 0)
+
+    label = myfont.render("Distanza   " + str(DISTANCE), 1, (255, 255, 0))
+    screen.blit(label, (0, 0))
+    label = myfont.render("Collisioni " + str(COLLISIONS), 1, (255, 255, 0))
+    screen.blit(label, (0, 15))
+    label = myfont.render(
+        "Bonta'     " + str(float(DISTANCE / (COLLISIONS + 1))), 1, (255, 255, 0))
+    screen.blit(label, (0, 30))
+
 
 def save_and_exit(filename, result):
     """save result on file"""
