@@ -13,26 +13,27 @@ import test
 #tmp/stats.csv da ricontrollare
 #SPEED!!!!!
 
-SURVIVORS = 4
+SURVIVORS = 6
 CHILDS = SURVIVORS*2
-MUTATIONS = 12
+MUTATIONS = 14
 POPULATION = SURVIVORS + CHILDS + MUTATIONS
 
 NUMBER_THREADS = 8
 FEATURES = 3 * 5
-TOTAL_BIT_GENOTYPE = (9*2+1)*5
+TOTAL_BIT_GENOTYPE = (9*2)*5
 
 MUTATION_PROBABILITY = 2  #%
 
 SELECTED = 8
 
-LIMIT = 3500
+LIMIT = 3000
 
 
 def main():
     """main"""
 
-    global POPULATION, NUMBER_THREADS, FEATURES,SURVIVORS, CHILDS, MUTATIONS,TOTAL_BIT_GENOTYPE,MUTATION_PROBABILITY
+    global POPULATION, NUMBER_THREADS, FEATURES,SURVIVORS, CHILDS
+    global MUTATIONS, TOTAL_BIT_GENOTYPE, MUTATION_PROBABILITY
 
     lastgen = int(scanforgenerationsfiles())
     print "Last generation found: #" + str(lastgen)
@@ -49,12 +50,12 @@ def main():
     file_stats = open("tmp/stats.csv", "a")
 
     while True:
-        command = 'python ' + os.path.realpath(__file__).replace(
-            os.path.basename(__file__), ("test.py --limit 3500 --file tmp/GEN_" + str(lastgen).zfill(3) + "_"), )
-        path="tmp/GEN_" + str(lastgen).zfill(3) + "_"
+        #command = 'python ' + os.path.realpath(__file__).replace(
+        #    os.path.basename(__file__), ("test.py --limit 3500 --file tmp/GEN_" + str(lastgen).zfill(3) + "_"), )
+        path = "tmp/GEN_" + str(lastgen).zfill(3) + "_"
         proc = []
         for i in range(0, POPULATION):
-            loc_proc = Process(target=testrun, args=(path + str(i).zfill(3),LIMIT,))
+            loc_proc = Process(target=testrun, args=(path + str(i).zfill(3), LIMIT,))
             proc.append(loc_proc)
 
         cycles = 0
@@ -66,8 +67,10 @@ def main():
                 proc[cycles * NUMBER_THREADS + i].join()
                 completed = completed + 1
             cycles = cycles + 1
-            
-        lastgen = evolution(lastgen, POPULATION, FEATURES, SURVIVORS, CHILDS, MUTATIONS,TOTAL_BIT_GENOTYPE,MUTATION_PROBABILITY, file_stats)
+
+        lastgen = evolution(lastgen, POPULATION, FEATURES, SURVIVORS, CHILDS, MUTATIONS, TOTAL_BIT_GENOTYPE, MUTATION_PROBABILITY, file_stats)
+
+        print "GEN #", lastgen
 
         file_stats.write("\n")
         file_stats.flush()
@@ -90,11 +93,7 @@ def evolution(generation, individualnumber, features, survivors, childs, mutatio
         score = in_file.readline()
         vettore = str(data).split(";")
         for j in range(0, len(vettore) - 1):
-            if math.fmod(j, 3) == 0:
-                table[i][0] = str(table[i][0]) + \
-                    str("{0:01b}".format(int(vettore[j])))
-            else:
-                table[i][0] = str(table[i][0]) + str("{0:09b}".format(int(vettore[j])))  # 511 max
+            table[i][0] = str(table[i][0]) + str("{0:09b}".format(int(vettore[j])))  # 511 max
         table[i][1] = float(score)
 
     # worst to best (increasing values)
@@ -115,7 +114,7 @@ def evolution(generation, individualnumber, features, survivors, childs, mutatio
 
     # SURVIVORS
     print "SURVIVORS"
-    inserted=[]
+    inserted = []
     newtable = [[0 for i in range(1)]for j in range(individualnumber)]
     for i in range(0, survivors):
         selection = random.randint(0, int(score_sum))
@@ -149,7 +148,7 @@ def evolution(generation, individualnumber, features, survivors, childs, mutatio
                 if table[j][2] >= selection:
                     genotype2 = j
                     break
-        midpoint = random.randint(0, bits-2)
+        midpoint = random.randint(1, bits-2)
         #print "GENI", genotype1, genotype2
         newtable[i][0] = (str(table[genotype1][0]))[0:midpoint]+(str(table[genotype2][0]))[midpoint:bits-1]
         newtable[i+1][0] = (str(table[genotype2][0]))[0:midpoint]+(str(table[genotype1][0]))[midpoint:bits-1]
@@ -181,7 +180,7 @@ def evolution(generation, individualnumber, features, survivors, childs, mutatio
     #for i in range(survivors+childs, survivors+childs+mutations):
     #    print newtable[i][0]
     #print ""
-    
+
     # e' tempo di scrivere i nuovi file da testare per la generazione
     # successiva
     generation = generation + 1
@@ -237,7 +236,6 @@ def random_spaceship():
     """generate a random spaceship"""
     line = []
     for j in range(0, 5):
-        line.append(controlrandomTrueFalse(80))
         line.append(random.randint(0, 511))
         line.append(random.randint(0, 511))
     return line

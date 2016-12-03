@@ -26,10 +26,8 @@ ANGLE_APERTURE = (2 * math.pi) / NUM_SENSORS
 WALL_THICKNESS = 10
 
 #   for every sensor:
-#   ON/OFF (0 or 1), IMPULSE (a vector like (x, x))
-#SHIP_AI = [1, 0.2, -2, 2, 1, -0.2, -1, -2, 1, 0.2, 1, 2, 1, -0.2, 1, 2, 1, -0.2, 1, 2]
-SHIP_AI = [1, -10, -10, 1, -10, 10,
-           0, 0, 0, 0, 0, 0, 1, -10, -10]
+#   IMPULSE (a vector like (x, x))
+SHIP_AI = [1, 1, 1, 1, 1, 1, 1, 1, 1, 1]
 
 COLLISION_TYPE = {
     "ROCK": 1,
@@ -42,10 +40,12 @@ DISTANCE = 0
 
 ship_last_position = 0
 
+SHIP_POINTS_LIST = ((0, 0), (0, 0), (0, 0))
+
 
 def add_meteor(space):
     """create meteor"""
-    mass = random.randint(int(MAX_ASTEROID_MASS/2.5), MAX_ASTEROID_MASS)
+    mass = random.randint(int(MAX_ASTEROID_MASS / 2.5), MAX_ASTEROID_MASS)
     radius = mass
     inertia = pymunk.moment_for_circle(mass, 0, radius, (0, 0))
     body = pymunk.Body(mass, inertia)
@@ -63,6 +63,7 @@ def add_meteor(space):
         (random.randint(-MAX_ASTEROID_IMPULSE, MAX_ASTEROID_IMPULSE), random.randint(-MAX_ASTEROID_IMPULSE, MAX_ASTEROID_IMPULSE)))
     body.angular_velocity = random.randint(
         -MAX_ASTEROID_ROTATION, MAX_ASTEROID_ROTATION)
+
     shape = pymunk.Circle(body, radius, (0, 0))
     shape.friction = 0
     shape.elasticity = 0.9
@@ -87,7 +88,13 @@ def add_ship(space):
     body.position = (SCREENX / 4, SCREENY / 4)
     global ship_last_position
     ship_last_position = body.position
-    segment1 = pymunk.Segment(body, (SHIP_DIM, 0),
+
+    convex_hull=pymunk.Poly(body, [pygame.math.Vector2(SHIP_DIM, 0,), pygame.math.Vector2(-SHIP_DIM, SHIP_DIM), pygame.math.Vector2(-SHIP_DIM, -SHIP_DIM)])
+
+    convex_hull.elasticity = 0
+    convex_hull.collision_type = COLLISION_TYPE["SHIP"]
+    convex_hull.filter = pymunk.ShapeFilter(categories=0x2)
+    """segment1 = pymunk.Segment(body, (SHIP_DIM, 0),
                               (-SHIP_DIM, SHIP_DIM), SHIP_DIM / 8)
     segment2 = pymunk.Segment(body, (SHIP_DIM, 0),
                               (-SHIP_DIM, -SHIP_DIM), SHIP_DIM / 8)
@@ -101,7 +108,7 @@ def add_ship(space):
     segment3.collision_type = COLLISION_TYPE["SHIP"]
     segment1.filter = pymunk.ShapeFilter(categories=0x2)
     segment2.filter = pymunk.ShapeFilter(categories=0x2)
-    segment3.filter = pymunk.ShapeFilter(categories=0x2)
+    segment3.filter = pymunk.ShapeFilter(categories=0x2)"""
 
     def collision_event(_arb, self, _space):
         """avoid collision between border and asteroid'"""
@@ -120,8 +127,12 @@ def add_ship(space):
         COLLISION_TYPE["OTHER"])
     collision.post_solve = collision_event
 
-    space.add(segment1, segment2, segment3, body)
+    space.add(convex_hull, body)
+    #space.add(segment1, segment2, segment3, body)
 
+    global SHIP_POINTS_LIST
+    SHIP_POINTS_LIST = ((SHIP_DIM, 0), (-SHIP_DIM, SHIP_DIM),
+                        (-SHIP_DIM, -SHIP_DIM))
     return body
 
 
@@ -155,8 +166,8 @@ def ship_poke_around(space, ship, screen):
     """check collision around ship in space all into the screen area"""
     # sensori
     sensor_pos = [0, 0]
-    #first sensor have x1.7 range because is in front
-    sensorrange=int(SENSOR_RANGE*1.7)
+    # first sensor have x1.7 range because is in front
+    sensorrange = int(SENSOR_RANGE * 1.7)
     custom_filter = pymunk.ShapeFilter(mask=pymunk.ShapeFilter.ALL_MASKS ^ 0x2)
     for i in range(0, NUM_SENSORS):
         # like this there will be always a sensor in the head
@@ -178,19 +189,23 @@ def ship_poke_around(space, ship, screen):
                                new_position, int(norm * 8), 1)
 
             # apply sensor response
-            if SHIP_AI[i * 3] == 1:
-                pygame.draw.circle(screen, (0, 255, 0),
+            ship.apply_force_at_local_point(
+                (SHIP_AI[0 + i * 2] * norm, SHIP_AI[1 + i * 2] * norm), (0, 0))
+
+            pygame.draw.circle(screen, (0, 255, 0),
                                new_position, int(norm * 8), 1)
-                #ship.torque = SHIP_AI[1 + i * 4] * norm
-                ship.apply_force_at_local_point(
-                    (SHIP_AI[1 + i * 3] * norm, SHIP_AI[2 + i * 3] * norm), (0, 0))
-            else:
-                pygame.draw.circle(screen, (255, 0, 0),
-                               new_position, int(norm * 8), 1)
+
+            #target = pygame.math.Vector2(SHIP_AI[0 + i * 2] * norm+ship.position[0], SHIP_AI[1 + i * 2] * norm+ship.position[1])
+            sens = pygame.math.Vector2(
+                SHIP_AI[0 + i * 2] * norm, SHIP_AI[1 + i * 2] * norm)
+            sens.rotate_ip(ship.angle*180/math.pi)
+            target = sens + \
+                pygame.math.Vector2(ship.position[0], ship.position[1])
+            pygame.draw.line(screen, (255, 128, 0), ship.position, target)
 
         pygame.draw.circle(screen, (255, 255, 255),
                            ((int)(sensor_pos[0]), (int)(sensor_pos[1])), sensorrange, 1)
-        sensorrange=SENSOR_RANGE
+        sensorrange = SENSOR_RANGE
 
 last_error = 0
 #integral = 0
@@ -219,7 +234,8 @@ def move_rotate_ship(ship):
     global DISTANCE
 
     direction = ship.position - ship_last_position
-    DISTANCE=DISTANCE+math.sqrt(direction.x*direction.x+direction.y*direction.y)
+    DISTANCE = DISTANCE + \
+        math.sqrt(direction.x * direction.x + direction.y * direction.y)
     ship_angle_direction = math.atan2(direction.y, direction.x)
 
     current_error = ship_angle_direction - ship.angle
@@ -260,40 +276,41 @@ def manage_asteroid(balls, space):
             balls_to_remove.append(ball)
 
     for ball in balls_to_remove:
-        try:#strange error
+        try:  # strange error
             space.remove(ball, ball.body)
             balls.remove(ball)
         except KeyError:
             print "ERRORE STRANO"
 
 
-#def main(argv):
-def start(datafile, limitRun):
+# def main(argv):
+def start(datafile=None, limitRun=888888):
     """main loop"""
-    #print "Usage:"
-    #print "--file:  the file containing the spaceship to simulate"
-    #print "--limit: frame limit"
+    # print "Usage:"
+    # print "--file:  the file containing the spaceship to simulate"
+    # print "--limit: frame limit"
 
     limit = int(limitRun)
 
+    global SHIP_AI
+
     if limit == -1:
         limit = 999999999
-    
-    try:
-        in_file = open(str(datafile), "r")
-    except:
-        print "Error opening file: " + datafile
-        sys.exit(-10)
 
-    text = in_file.read().split(";")
-    in_file.close()
-    for j in range(0, len(text) - 1):
-        if math.fmod(j, 3) == 0:
-            SHIP_AI[j] = int(text[j])
-        else:
-            SHIP_AI[j] = (int(text[j]) - 256) / 14
+    if datafile is not None:
+        try:
+            in_file = open(str(datafile), "r")
+        except:
+            print "Error opening file: " + datafile
+            sys.exit(-10)
+        text = in_file.read().split(";")
+        in_file.close()
+        for j in range(0, len(SHIP_AI)):
+            SHIP_AI[j] = (float(text[j]) - 256.0) / 14.0
+    else:
+        SHIP_AI = [10, 10, 0, 0, 0, 0, 0, 0, 10, 10]
 
-    #print "Simulation of", datafile, "running for", limit, "iterations"
+    print "Simulation of", datafile, "running for", limit, "iterations"
     #print SHIP_AI
 
     screen = pygame.display.set_mode((SCREENX, SCREENX))
@@ -309,6 +326,8 @@ def start(datafile, limitRun):
 
     ship = add_ship(space)
     add_border(space)
+
+    ship.apply_impulse_at_local_point((120, 40), (0, 0))
 
     iteration_count = 0
 
@@ -339,18 +358,39 @@ def start(datafile, limitRun):
         move_rotate_ship(ship)
 
         # game simulation
-        space.step(1 / 25.0)
-        #clock.tick(60)
+        space.step(1 / 30.0)
+        #clock.tick(30)
 
         # game draw
-        space.debug_draw(draw_options)
+        #space.debug_draw(draw_options)
+        draw(screen, ship, balls)
+
         pygame.display.flip()
         # print clock.get_fps()
         iteration_count = iteration_count + 1
 
     global DISTANCE
-    save_and_exit(datafile, float(DISTANCE/(COLLISIONS+1)))
+    save_and_exit(datafile, float(DISTANCE / (COLLISIONS + 1)))
 
+
+def draw(screen, ship,meteors):
+    """draw function, all the draw calls should go in here"""
+    global SHIP_POINTS_LIST
+
+    point1 = pygame.math.Vector2((SHIP_POINTS_LIST[0])[0], (SHIP_POINTS_LIST[0])[1])
+    point1.rotate_ip(ship.angle*180/math.pi)
+    point2 = pygame.math.Vector2((SHIP_POINTS_LIST[1])[0], (SHIP_POINTS_LIST[1])[1])
+    point2.rotate_ip(ship.angle*180/math.pi)
+    point3 = pygame.math.Vector2((SHIP_POINTS_LIST[2])[0], (SHIP_POINTS_LIST[2])[1])
+    point3.rotate_ip(ship.angle*180/math.pi)
+    ship_points = ((point1[0] + ship.position[0], point1[1] + ship.position[1]),
+                   (point2[0] + ship.position[0], point2[1] + ship.position[1]),
+                   (point3[0] + ship.position[0], point3[1] + ship.position[1]))
+
+    pygame.draw.polygon(screen, (51, 153, 255), ship_points, 0)
+
+    for ball in meteors:
+        pygame.draw.circle(screen,(128,128,128),(int(ball.body.position[0]),int(ball.body.position[1])),int(ball.radius),0)
 
 def save_and_exit(filename, result):
     """save result on file"""
@@ -361,5 +401,5 @@ def save_and_exit(filename, result):
     myfile.write(str(result))
     sys.exit(1)
 
-#if __name__ == '__main__':
-#    main(sys.argv[1:])
+if __name__ == '__main__':
+    start()
