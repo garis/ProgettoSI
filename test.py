@@ -371,7 +371,7 @@ def start(datafile=None, limitRun=888888):
 
         # game draw
         # space.debug_draw(draw_options)
-        draw(screen, ship, balls, myfont)
+        draw(screen, ship, balls, myfont, iteration_count, limit)
 
         pygame.display.flip()
         # print clock.get_fps()
@@ -381,9 +381,8 @@ def start(datafile=None, limitRun=888888):
     save_and_exit(datafile, float(DISTANCE / (COLLISIONS + 1)))
 
 
-def draw(screen, ship, meteors, myfont):
+def draw(screen, ship, meteors, myfont, iteration_count, limit):
     """draw function, all the draw calls should go in here"""
-    global SHIP_POINTS_LIST
 
     point1 = pygame.math.Vector2(
         (SHIP_POINTS_LIST[0])[0], (SHIP_POINTS_LIST[0])[1])
@@ -412,6 +411,9 @@ def draw(screen, ship, meteors, myfont):
     label = myfont.render(
         "Bonta'     " + str(float(DISTANCE / (COLLISIONS + 1))), 1, (255, 255, 0))
     screen.blit(label, (0, 30))
+    label = myfont.render(
+        "Countdown  " + str(limit-iteration_count), 1, (255, 255, 0))
+    screen.blit(label, (0, 40))
 
 
 def save_and_exit(filename, result):
