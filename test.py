@@ -19,8 +19,8 @@ MAX_ASTEROID_IMPULSE = int(MAX_ASTEROID_MASS * 3.2)
 MAX_ASTEROID_ROTATION = 5
 SHIP_TORQUE_LIMIT = 65
 SHIP_DIM = 17
-SENSOR_RANGE = 25
-SENSOR_DISTANCE = 20
+SENSOR_RANGE = 22
+SENSOR_DISTANCE = 26
 NUM_SENSORS = 5
 ANGLE_APERTURE = (2 * math.pi) / NUM_SENSORS
 WALL_THICKNESS = 10
@@ -101,6 +101,7 @@ def add_ship(space):
     convex_hull.elasticity = 0
     convex_hull.collision_type = COLLISION_TYPE["SHIP"]
     convex_hull.filter = pymunk.ShapeFilter(categories=0x2)
+    convex_hull.friction=0.5
     """segment1 = pymunk.Segment(body, (SHIP_DIM, 0),
                               (-SHIP_DIM, SHIP_DIM), SHIP_DIM / 8)
     segment2 = pymunk.Segment(body, (SHIP_DIM, 0),
@@ -278,8 +279,8 @@ def manage_asteroid(balls, space):
         except KeyError:
             print "ERRORE STRANO"
 
+MINSPEED=12
 
-# def main(argv):
 def start(datafile=None, limitRun=888888):
     """main loop"""
     # print "Usage:"
@@ -330,7 +331,7 @@ def start(datafile=None, limitRun=888888):
     ship = add_ship(space)
     add_border(space)
 
-    ship.apply_impulse_at_local_point((120, 40), (0, 0))
+    ship.apply_impulse_at_local_point((100, 40), (0, 0))
 
     iteration_count = 0
 
@@ -357,12 +358,16 @@ def start(datafile=None, limitRun=888888):
         # game logic
         manage_asteroid(balls, space)
         #move_with_mouse(pygame.mouse.get_pos(), ship)
+
+        speed = ship.velocity.get_length()
+        if speed <= MINSPEED:
+            ship.apply_force_at_local_point((MINSPEED*2/speed, 0), (0, 0))
         ship_poke_around(space, ship, screen)
         move_rotate_ship(ship)
 
         # game simulation
         space.step(1 / 30.0)
-        #clock.tick(4000)
+        #clock.tick(60)
 
         # game draw
         # space.debug_draw(draw_options)
@@ -409,6 +414,9 @@ def draw(screen, ship, meteors, myfont, iteration_count, limit):
     label = myfont.render(
         "Countdown  " + str(limit-iteration_count), 1, (255, 255, 0))
     screen.blit(label, (0, 45))
+    label = myfont.render(
+        "Velocity   " + str(ship.velocity.get_length()), 1, (255, 255, 0))
+    screen.blit(label, (0, 60))
 
 
 def save_and_exit(filename, result):
