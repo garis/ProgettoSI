@@ -42,6 +42,12 @@ ship_last_position = 0
 
 SHIP_POINTS_LIST = ((0, 0), (0, 0), (0, 0))
 
+#ship P.I.D.
+last_error = 0
+#integral = 0
+P_FACTOR = 10
+#I_FACTOR = 0
+D_FACTOR = 400
 
 def add_meteor(space):
     """create meteor"""
@@ -208,13 +214,6 @@ def ship_poke_around(space, ship, screen):
                            ((int)(sensor_pos[0]), (int)(sensor_pos[1])), sensorrange, 1)
         sensorrange = SENSOR_RANGE
 
-last_error = 0
-#integral = 0
-P_FACTOR = 10
-#I_FACTOR = 0
-D_FACTOR = 400
-
-
 def move_rotate_ship(ship):
     """rotate the ship according the trajectory"""
     """
@@ -227,10 +226,6 @@ def move_rotate_ship(ship):
     global ship_last_position
 
     global last_error
-    #global integral
-    global P_FACTOR
-    #global I_FACTOR
-    global D_FACTOR
 
     global DISTANCE
 
@@ -340,10 +335,10 @@ def start(datafile=None, limitRun=888888):
     iteration_count = 0
 
     while iteration_count < limit:
-        """for event in pygame.event.get():
+        for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 sys.exit(0)
-            elif event.type == pygame.KEYDOWN:
+            """elif event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_ESCAPE:
                     sys.exit(0)
                 elif event.key == pygame.K_DOWN:
@@ -367,14 +362,14 @@ def start(datafile=None, limitRun=888888):
 
         # game simulation
         space.step(1 / 30.0)
-        # clock.tick(30)
+        #clock.tick(4000)
 
         # game draw
         # space.debug_draw(draw_options)
         draw(screen, ship, balls, myfont, iteration_count, limit)
 
         pygame.display.flip()
-        # print clock.get_fps()
+        #print clock.get_fps()
         iteration_count = iteration_count + 1
 
     global DISTANCE
@@ -413,7 +408,7 @@ def draw(screen, ship, meteors, myfont, iteration_count, limit):
     screen.blit(label, (0, 30))
     label = myfont.render(
         "Countdown  " + str(limit-iteration_count), 1, (255, 255, 0))
-    screen.blit(label, (0, 40))
+    screen.blit(label, (0, 45))
 
 
 def save_and_exit(filename, result):
