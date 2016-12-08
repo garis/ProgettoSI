@@ -13,7 +13,7 @@ import pymunk.pygame_util
 
 SCREENX = 400
 SCREENY = 400
-MAX_ASTEROIDS = 20
+MAX_ASTEROIDS = 8
 MAX_ASTEROID_MASS = 15
 MAX_ASTEROID_IMPULSE = int(MAX_ASTEROID_MASS * 3.2)
 MAX_ASTEROID_ROTATION = 5
@@ -49,10 +49,12 @@ P_FACTOR = 10
 #I_FACTOR = 0
 D_FACTOR = 400
 
+AUTO_CLOSE_VALUE = 2
+
 def add_meteor(space):
     """create meteor"""
-    mass = random.randint(int(MAX_ASTEROID_MASS / 2.5), MAX_ASTEROID_MASS)
-    radius = mass
+    mass = random.randint(int(MAX_ASTEROID_MASS / 2), MAX_ASTEROID_MASS)
+    radius = mass * 1.7
     inertia = pymunk.moment_for_circle(mass, 0, radius, (0, 0))
     body = pymunk.Body(mass, inertia)
     if random.randint(0, 1):        # from left or right
@@ -377,7 +379,9 @@ def start(datafile=None, limitRun=888888):
         #print clock.get_fps()
         iteration_count = iteration_count + 1
 
-    global DISTANCE
+        if float(DISTANCE / (COLLISIONS + 1)) < AUTO_CLOSE_VALUE and iteration_count > 10:
+            save_and_exit(datafile, float(DISTANCE / (COLLISIONS + 1)))
+
     save_and_exit(datafile, float(DISTANCE / (COLLISIONS + 1)))
 
 

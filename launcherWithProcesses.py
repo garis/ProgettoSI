@@ -18,7 +18,7 @@ CHILDS = SURVIVORS*3
 MUTATIONS = 44
 POPULATION = SURVIVORS + CHILDS + MUTATIONS
 
-NUMBER_THREADS = 8
+NUMBER_THREADS = 4
 FEATURES = 2 * 5
 TOTAL_BIT_GENOTYPE = (9*2)*5
 
@@ -28,9 +28,6 @@ LIMIT = 9000
 
 def main():
     """main"""
-
-    global POPULATION, NUMBER_THREADS, FEATURES,SURVIVORS, CHILDS
-    global MUTATIONS, TOTAL_BIT_GENOTYPE, MUTATION_PROBABILITY
 
     lastgen = int(scanforgenerationsfiles())
     print "Last generation found: #" + str(lastgen)
@@ -47,8 +44,6 @@ def main():
     file_stats = open("tmp/stats.csv", "a")
 
     while True:
-        #command = 'python ' + os.path.realpath(__file__).replace(
-        #    os.path.basename(__file__), ("test.py --limit 3500 --file tmp/GEN_" + str(lastgen).zfill(3) + "_"), )
         path = "tmp/GEN_" + str(lastgen).zfill(3) + "_"
         proc = []
         for i in range(0, POPULATION):
@@ -92,7 +87,10 @@ def evolution(generation, individualnumber, features, survivors, childs, mutatio
         table[i][0] = ""
         for j in range(0, len(vettore) - 1):
             table[i][0] = str(table[i][0]) + str("{0:09b}".format(int(vettore[j])))  # 511 max
-        table[i][1] = float(score)
+        try:
+            table[i][1] = float(score)
+        except ValueError:
+            table[i][1] = 0
 
     #for i in range(0, individualnumber):
     #    print i,"  ",table[i][0]
