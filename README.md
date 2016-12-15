@@ -1,7 +1,18 @@
 # ProgettoSI
 
-install python3
-then:
-    $ apt-get install python3-pip
-    $ pip3 install pymunk
-    $ pip3 install pygame
+### Install python3:
+$ apt-get install python3
+
+$ apt-get install python3-pip
+
+$ pip3 install pymunk
+
+$ pip3 install pygame
+
+Done!
+
+### Run the program:
+
+Start "launcherWithProcesses.py" and play with the parameters 
+
+#### Warning: it's a messy code
