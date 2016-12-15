@@ -1,13 +1,13 @@
 # ProgettoSI
 
 ### Install python3:
-$ 'apt-get install python3'
+`apt-get install python3`
 
-$ 'apt-get install python3-pip'
+`apt-get install python3-pip`
 
-$ 'pip3 install pymunk'
+`pip3 install pymunk`
 
-$ 'pip3 install pygame'
+`pip3 install pygame`
 
 Done!
 
