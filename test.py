@@ -42,7 +42,7 @@ ship_last_position = 0
 
 SHIP_POINTS_LIST = ((0, 0), (0, 0), (0, 0))
 
-#ship P.I.D.
+# ship P.I.D.
 last_error = 0
 #integral = 0
 P_FACTOR = 10
@@ -50,6 +50,7 @@ P_FACTOR = 10
 D_FACTOR = 400
 
 AUTO_CLOSE_VALUE = 2
+
 
 def add_meteor(space):
     """create meteor"""
@@ -103,7 +104,7 @@ def add_ship(space):
     convex_hull.elasticity = 0
     convex_hull.collision_type = COLLISION_TYPE["SHIP"]
     convex_hull.filter = pymunk.ShapeFilter(categories=0x2)
-    convex_hull.friction=0.5
+    convex_hull.friction = 0.5
     """segment1 = pymunk.Segment(body, (SHIP_DIM, 0),
                               (-SHIP_DIM, SHIP_DIM), SHIP_DIM / 8)
     segment2 = pymunk.Segment(body, (SHIP_DIM, 0),
@@ -207,7 +208,7 @@ def ship_poke_around(space, ship, screen):
 
             #target = pygame.math.Vector2(SHIP_AI[0 + i * 2] * norm+ship.position[0], SHIP_AI[1 + i * 2] * norm+ship.position[1])
             sens = pygame.math.Vector2(
-                SHIP_AI[0 + i * 2] * norm, SHIP_AI[1 + i * 2] * norm)
+                SHIP_AI[0 + i * 2] * norm * 2, SHIP_AI[1 + i * 2] * norm * 2)
             sens.rotate_ip(ship.angle * 180 / math.pi)
             target = sens + \
                 pygame.math.Vector2(ship.position[0], ship.position[1])
@@ -216,6 +217,7 @@ def ship_poke_around(space, ship, screen):
         pygame.draw.circle(screen, (255, 255, 255),
                            ((int)(sensor_pos[0]), (int)(sensor_pos[1])), sensorrange, 1)
         sensorrange = SENSOR_RANGE
+
 
 def move_rotate_ship(ship):
     """rotate the ship according the trajectory"""
@@ -279,9 +281,10 @@ def manage_asteroid(balls, space):
             space.remove(ball, ball.body)
             balls.remove(ball)
         except KeyError:
-            print "ERRORE STRANO"
+            print ("ERRORE STRANO")
 
-MINSPEED=12
+MINSPEED = 12
+
 
 def start(datafile=None, limitRun=888888):
     """main loop"""
@@ -307,7 +310,7 @@ def start(datafile=None, limitRun=888888):
         try:
             in_file = open(str(datafile), "r")
         except:
-            print "Error opening file: " + datafile
+            print ("Error opening file:", datafile)
             sys.exit(-10)
         text = in_file.read().split(";")
         in_file.close()
@@ -316,7 +319,7 @@ def start(datafile=None, limitRun=888888):
     else:
         SHIP_AI = [10, 10, 0, 0, 0, 0, 0, 0, 10, 10]
 
-    print "Simulation of", datafile, "running for", limit, "iterations"
+    print ("Simulation of", datafile, "running for", limit, "iterations")
     # print SHIP_AI
 
     screen = pygame.display.set_mode((SCREENX, SCREENX))
@@ -363,20 +366,20 @@ def start(datafile=None, limitRun=888888):
 
         speed = ship.velocity.get_length()
         if speed <= MINSPEED:
-            ship.apply_force_at_local_point((MINSPEED*2/speed, 0), (0, 0))
+            ship.apply_force_at_local_point((MINSPEED * 2 / speed, 0), (0, 0))
         ship_poke_around(space, ship, screen)
         move_rotate_ship(ship)
 
         # game simulation
         space.step(1 / 30.0)
-        #clock.tick(60)
+        # clock.tick(60)
 
         # game draw
         # space.debug_draw(draw_options)
         draw(screen, ship, balls, myfont, iteration_count, limit)
 
         pygame.display.flip()
-        #print clock.get_fps()
+        # print clock.get_fps()
         iteration_count = iteration_count + 1
 
         if float(DISTANCE / (COLLISIONS + 1)) < AUTO_CLOSE_VALUE and iteration_count > 10:
@@ -416,7 +419,7 @@ def draw(screen, ship, meteors, myfont, iteration_count, limit):
         "Bonta'     " + str(float(DISTANCE / (COLLISIONS + 1))), 1, (255, 255, 0))
     screen.blit(label, (0, 30))
     label = myfont.render(
-        "Countdown  " + str(limit-iteration_count), 1, (255, 255, 0))
+        "Countdown  " + str(limit - iteration_count), 1, (255, 255, 0))
     screen.blit(label, (0, 45))
     label = myfont.render(
         "Velocity   " + str(ship.velocity.get_length()), 1, (255, 255, 0))

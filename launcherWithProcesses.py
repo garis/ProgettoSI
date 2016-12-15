@@ -10,39 +10,50 @@ import math
 import test
 
 ###BUG###
-#tmp/stats.csv da ricontrollare
-#SPEED!!!!!
+# tmp/stats.csv da ricontrollare
+# SPEED!!!!!
 
-#NOTA BENE:
-#per mia sanità mentale d'ora in poi:
+# NOTA BENE:
+# per mia sanità mentale d'ora in poi:
 # navicella/astronave/triangolo azzurro = individuo
 # geni = bit che rappresentano i comportamento dell'individuo
 
-#quando c'e' da scegliere un individuo si usa la "roulette selection"
-#esempio:   individuo1: punteggio =20
+# quando c'e' da scegliere un individuo si usa la "roulette selection"
+# esempio:   individuo1: punteggio =20
 #           individuo2: punteggio =30
 #           totale=                50
-#estraggo un numero da 1 a 50 e così più un individuo è bravo e più probabilità ha di essere scelto
+# estraggo un numero da 1 a 50 e così più un individuo è bravo e più
+# probabilità ha di essere scelto, se estraggo 40: 20<40 quindi nada,
+# 40<50 Yes, quindi scelgo individuo2
 
-SURVIVORS = 14                              #quanti individui (estratti a random con la roulette) preservo inalterati
-CHILDS = SURVIVORS*3                        #quanti individui (estratti a random con la roulette) sono da creare sfruttando la precedente generazione (combinandone i geni)
-MUTATIONS = 72                              #quanti individui (estratti a random con la roulette) vengono afflitti da una mutazione
-POPULATION = SURVIVORS + CHILDS + MUTATIONS #quanti individui ci sono in tutto
+# quanti individui (estratti a random con la roulette) preservo inalterati
+SURVIVORS = 14
+# quanti individui (estratti a random con la roulette) sono da creare
+# sfruttando la precedente generazione (combinandone i geni)
+CHILDS = SURVIVORS * 3
+# quanti individui (estratti a random con la roulette) vengono afflitti da
+# una mutazione
+MUTATIONS = 72
+POPULATION = SURVIVORS + CHILDS + MUTATIONS  # quanti individui ci sono in tutto
 
-NUMBER_THREADS = 4                          #quante esecuzioni contemporanee sono ammesse
-FEATURES = 2 * 5                            #quanti campi servono per descrivere un individuo
-TOTAL_BIT_GENOTYPE = (9*2)*5                #quanti bit servono per descrivere un individuo
+NUMBER_THREADS = 4  # quante esecuzioni contemporanee sono ammesse
+FEATURES = 2 * 5  # quanti campi servono per descrivere un individuo
+# quanti bit servono per descrivere un individuo
+TOTAL_BIT_GENOTYPE = (9 * 2) * 5
 
-MUTATION_PROBABILITY = 3  #%                #% quanto e' probabile che avvenga una mutazione
+# %                #% quanto e' probabile che avvenga una mutazione
+MUTATION_PROBABILITY = 3
 
-LIMIT = 10000                               #per quante iterazioni far andare la simulazione
+LIMIT = 10000  # per quante iterazioni far andare la simulazione
+
 
 def main():
     """main"""
 
-    #cerco l'ultima generazione in tmp/ cosicche' si possa riprendere una esecuzione interrotta...
+    # cerco l'ultima generazione in tmp/ cosicche' si possa riprendere una
+    # esecuzione interrotta...
     lastgen = int(scanforgenerationsfiles())
-    print "Last generation found: #" + str(lastgen)
+    print ("Last generation found: #", str(lastgen))
 
     #... per evitare problemi permetto la riscrittura dell'ultima generazione...
     lastgen = lastgen - 1
@@ -50,21 +61,23 @@ def main():
     #...se ho trovato qualcosa.....
     if lastgen > 0:
         #...evolvo usando i dati presi dall'ultima generazione trovata...
-        evolution(lastgen, POPULATION, FEATURES, SURVIVORS, CHILDS, MUTATIONS, TOTAL_BIT_GENOTYPE, MUTATION_PROBABILITY)
+        evolution(lastgen, POPULATION, FEATURES, SURVIVORS, CHILDS,
+                  MUTATIONS, TOTAL_BIT_GENOTYPE, MUTATION_PROBABILITY)
     else:
         #...genero degli individui da zero in maniera casuale
         createfiles(FEATURES)
         lastgen = 0
 
-    #file di statistiche varie
+    # file di statistiche varie
     file_stats = open("tmp/stats.csv", "a")
 
     while True:
-        #creo i processi per simulare l'indiviudo...
+        # creo i processi per simulare l'indiviudo...
         path = "tmp/GEN_" + str(lastgen).zfill(3) + "_"
         proc = []
         for i in range(0, POPULATION):
-            loc_proc = Process(target=testrun, args=(path + str(i).zfill(3), LIMIT,))
+            loc_proc = Process(target=testrun, args=(
+                path + str(i).zfill(3), LIMIT,))
             proc.append(loc_proc)
 
         #... li avvio andare le simulazioni in gruppi di NUMBER_THREADS...
@@ -79,9 +92,10 @@ def main():
             cycles = cycles + 1
 
         #... e una volta finite le simulazioni genero la nuova generazione....
-        lastgen = evolution(lastgen, POPULATION, FEATURES, SURVIVORS, CHILDS, MUTATIONS, TOTAL_BIT_GENOTYPE, MUTATION_PROBABILITY, file_stats)
+        lastgen = evolution(lastgen, POPULATION, FEATURES, SURVIVORS, CHILDS,
+                            MUTATIONS, TOTAL_BIT_GENOTYPE, MUTATION_PROBABILITY, file_stats)
 
-        print "GEN #", lastgen
+        print ("GEN #", lastgen)
 
         file_stats.write("\n")
         file_stats.flush()
@@ -91,11 +105,12 @@ def main():
 
 def evolution(generation, individualnumber, features, survivors, childs, mutations, bits, mutations_prob, file_stats=None):
     """prende i file e genera i dati per la successiva generazione"""
-    # carico tutti i file in una tabella e gli ordino per numero di collisioni crescente....
+    # carico tutti i file in una tabella e gli ordino in ordine crescente in
+    # base al valore della metrica scelta
 
     filename = os.path.realpath(__file__).replace(
         os.path.basename(__file__), ("tmp/GEN_" + str(generation).zfill(3) + "_"))
-    #STRUTTURA table:
+    # STRUTTURA table:
     # [genotype, score, score_sum]
     # score_sum serve per la roulette di selezione
     table = [[0 for i in range(3)]for j in range(individualnumber)]
@@ -106,59 +121,61 @@ def evolution(generation, individualnumber, features, survivors, childs, mutatio
         vettore = str(data).split(";")
         table[i][0] = ""
         for j in range(0, len(vettore) - 1):
-            table[i][0] = str(table[i][0]) + str("{0:09b}".format(int(vettore[j])))  # 511 max
+            table[i][0] = str(table[i][0]) + \
+                str("{0:09b}".format(int(vettore[j])))  # 511 max
         try:
             table[i][1] = float(score)
         except ValueError:
             table[i][1] = 0
 
-    #for i in range(0, individualnumber):
+    # for i in range(0, individualnumber):
     #    print i,"  ",table[i][0]
 
     # ordino dal peggiore al migliore (increasing values)
     table = sorted(table, key=operator.itemgetter(1))
 
-    # scrivo le statistiche sul file stats.csv (solo il punteggio di ogni individuo)
+    # scrivo le statistiche sul file stats.csv (solo il punteggio di ogni
+    # individuo)
     if file_stats is not None:
         file_stats.write(str(generation) + ";")
         for i in range(0, individualnumber):
             file_stats.write(str(table[i][1]) + ";")
 
-    #ora avvengono le cose interessanti.
-    #inizio col creare i dati per la roulette di selezione...
+    # ora avvengono le cose interessanti.
+    # inizio col creare i dati per la roulette di selezione...
     score_sum = 0
     for i in range(0, individualnumber):
         score_sum = score_sum + table[i][1]
         table[i][2] = score_sum
-        #print table[i][0], table[i][2]
+        # print table[i][0], table[i][2]
 
     #...ora mi occupo degli individui da tramandare intatti nella nuova generazione
-    print "SURVIVORS"
+    print ("SURVIVORS")
     inserted = []
     newtable = [[0 for i in range(1)]for j in range(individualnumber)]
     for i in range(0, survivors):
-        #ne scelgo uno a caso...
+        # ne scelgo uno a caso...
         selection = random.randint(0, int(score_sum))
-        genotype = individualnumber-1
-        #print "SEL", selection
+        genotype = individualnumber - 1
+        # print "SEL", selection
         for j in range(0, individualnumber):
             #...evitando di inserirlo più volte (gli individui non si moltiplicano da soli)
             if table[j][2] >= selection and j not in inserted:
                 genotype = j
                 break
-        #print "GENI", genotype, table[genotype][2]
+        # print "GENI", genotype, table[genotype][2]
         inserted.append(genotype)
         #... e inserisco il prescelto nella nuova generazione
         newtable[i][0] = table[genotype][0]
 
-    #for i in range(0, survivors):
+    # for i in range(0, survivors):
     #    print newtable[i][0]
-    #print ""
+    # print ""
 
     # ora mi occupo di mischiare tra loro i bit di 2 individui
-    print "RECOMBINATION"
-    for i in range(survivors, survivors+childs, 2):
-        #scelgo due individui distinti...
+    print ("RECOMBINATION")
+    for i in range(survivors, survivors + childs, 2):
+        # scelgo due individui distinti...
         genotype1 = 0
         genotype2 = 0
         while genotype1 == genotype2:
@@ -174,24 +191,27 @@ def evolution(generation, individualnumber, features, survivors, childs, mutatio
                     break
         #...e un punto di mezzo che determina uno spezzamento da usare per mischiare i bit
         midpoint = random.randint(1, bits)
-        #print "GENI", genotype1, genotype2
-        #ora li mischio creando 2 individui
-        #esempio:
-        #A = [++++++++++], B =[----------], RANDOM = 6 allora:
-        #N1=[++++++----] AND N2 = [------++++]
+        # print "GENI", genotype1, genotype2
+        # ora li mischio creando 2 individui
+        # esempio:
+        # A = [++++++++++], B =[----------], RANDOM = 6 allora:
+        # N1=[++++++----] AND N2 = [------++++]
 
-        newtable[i][0] = (str(table[genotype1][0]))[0:midpoint]+(str(table[genotype2][0]))[midpoint:bits+1]
-        newtable[i+1][0] = (str(table[genotype2][0]))[0:midpoint]+(str(table[genotype1][0]))[midpoint:bits+1]
+        newtable[i][0] = (str(table[genotype1][0]))[0:midpoint] + \
+            (str(table[genotype2][0]))[midpoint:bits + 1]
+        newtable[i + 1][0] = (str(table[genotype2][0]))[0:midpoint] + \
+            (str(table[genotype1][0]))[midpoint:bits + 1]
 
-    #for i in range(survivors, survivors+childs):
+    # for i in range(survivors, survivors+childs):
     #    print newtable[i][0]
-    #print ""
+    # print ""
 
-    #ora i occupo delle mutazioni
-    #non si fa altro che scegliere un individuo e fare il bit flip di un solo bit in base ad una certa probabilità...
-    print "MUTATIONS"
-    for i in range(survivors+childs, survivors+childs+mutations):
-        #seleziona un esemplare a caso
+    # ora i occupo delle mutazioni
+    # non si fa altro che scegliere un individuo e fare il bit flip di un solo
+    # bit in base ad una certa probabilità...
+    print ("MUTATIONS")
+    for i in range(survivors + childs, survivors + childs + mutations):
+        # seleziona un esemplare a caso
         genotype = 0
         selection = random.randint(0, int(score_sum))
         for j in range(1, individualnumber):
@@ -199,32 +219,33 @@ def evolution(generation, individualnumber, features, survivors, childs, mutatio
                 genotype = j
                 break
 
-        #lo inserisce nella nuova lista mutado a caso
+        # lo inserisce nella nuova lista mutado a caso
         stringa = ""
         for j in range(0, bits):
-            singlebit = bool(int((str(table[genotype][0]))[j:j+1]))
+            singlebit = bool(int((str(table[genotype][0]))[j:j + 1]))
             if controlrandomTrueFalse(mutations_prob):
                 singlebit = not singlebit
-            stringa = str(stringa)+str(int(singlebit))
+            stringa = str(stringa) + str(int(singlebit))
         newtable[i][0] = stringa
 
-    #for i in range(survivors+childs, survivors+childs+mutations):
+    # for i in range(survivors+childs, survivors+childs+mutations):
     #    print newtable[i][0]
 
     #... e ora tempo di scrivere i nuovi file da testare per la generazione successiva.
     generation = generation + 1
-    print "Generation", generation, "is born!"
+    print ("Generation", generation, "is born!")
     for i in range(0, individualnumber):
         out_file = open("tmp/GEN_" + str(generation).zfill(3) +
                         "_" + str(i).zfill(3), "w")
         stringa = newtable[i][0]
         for j in range(0, features):
-            out_file.write(str(int(stringa[j*9:j*9+9], 2)) + ";")
+            out_file.write(str(int(stringa[j * 9:j * 9 + 9], 2)) + ";")
 
         out_file.write("\n")
         out_file.close()
 
     return generation
+
 
 def scanforgenerationsfiles():
     """search for the last generation"""
@@ -262,6 +283,7 @@ def random_spaceship(features):
 
 def controlrandomTrueFalse(percent=50):
     return int(random.randrange(100) < percent)
+
 
 def testrun(path, limit):
     """launch simulation"""
