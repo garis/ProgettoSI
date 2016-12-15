@@ -13,6 +13,6 @@ Done!
 
 ### Run the program:
 
-Start "launcherWithProcesses.py" and play with the parameters 
+Start "launcherWithProcesses.py" (like `python3 launcherWithProcesses.py` and play with the parameters 
 
 #### Warning: it's a messy code
