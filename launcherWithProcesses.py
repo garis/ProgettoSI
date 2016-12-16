@@ -46,6 +46,9 @@ MUTATION_PROBABILITY = 3
 
 LIMIT = 10000  # per quante iterazioni far andare la simulazione
 
+ROW_COLUMN_WINDOW=int(NUMBER_THREADS/2)
+WINDOW_DIMENSION=400
+WINDOW_BEZEL=10
 
 def main():
     """main"""
@@ -77,7 +80,7 @@ def main():
         proc = []
         for i in range(0, POPULATION):
             loc_proc = Process(target=testrun, args=(
-                path + str(i).zfill(3), LIMIT,))
+            path + str(i).zfill(3), LIMIT,WINDOW_BEZEL+(i%ROW_COLUMN_WINDOW)*(WINDOW_DIMENSION+WINDOW_BEZEL),WINDOW_BEZEL+(int(i/ROW_COLUMN_WINDOW)%ROW_COLUMN_WINDOW)*(WINDOW_DIMENSION+WINDOW_BEZEL)))
             proc.append(loc_proc)
 
         #... li avvio andare le simulazioni in gruppi di NUMBER_THREADS...
@@ -285,9 +288,9 @@ def controlrandomTrueFalse(percent=50):
     return int(random.randrange(100) < percent)
 
 
-def testrun(path, limit):
+def testrun(path, limit,windowX,windowY):
     """launch simulation"""
-    test.start(path, limit)
+    test.start(path, limit,windowX,windowY)
     return None
 
 if __name__ == '__main__':

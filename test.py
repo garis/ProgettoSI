@@ -286,13 +286,16 @@ def manage_asteroid(balls, space):
 MINSPEED = 12
 
 
-def start(datafile=None, limitRun=888888):
+def start(datafile=None, limitRun=888888, windowX=0, windowY=0):
     """main loop"""
     # print "Usage:"
     # print "--file:  the file containing the spaceship to simulate"
     # print "--limit: frame limit"
 
+    os.environ['SDL_VIDEO_WINDOW_POS'] = str(windowX) + "," + str(windowY)
+
     pygame.init()
+    
     # initialize font; must be called after 'pygame.init()' to avoid 'Font not
     # Initialized' error
     myfont = pygame.font.SysFont("monospace", 15)
@@ -322,7 +325,7 @@ def start(datafile=None, limitRun=888888):
     print ("Simulation of", datafile, "running for", limit, "iterations")
     # print SHIP_AI
 
-    screen = pygame.display.set_mode((SCREENX, SCREENX))
+    screen = pygame.display.set_mode((SCREENX, SCREENX), pygame.NOFRAME)
     pygame.display.set_caption("Tests")
     pymunk.pygame_util.positive_y_is_up = False
     clock = pygame.time.Clock()
