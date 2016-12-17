@@ -23,7 +23,7 @@ SENSOR_RANGE = 22
 SENSOR_DISTANCE = 26
 NUM_SENSORS = 5
 ANGLE_APERTURE = (2 * math.pi) / NUM_SENSORS
-WALL_THICKNESS = 10
+WALL_THICKNESS = int(SCREENX / 4)
 
 #   for every sensor:
 #   IMPULSE (a vector like (x, x))
@@ -151,15 +151,16 @@ def add_border(space):
     """create border"""
     body = pymunk.Body(body_type=pymunk.Body.STATIC)
     body.position = (0, 0)
-    thick = WALL_THICKNESS * 0.5
-    segment1 = pymunk.Segment(body, (-thick, -thick),
-                              (SCREENX + thick, -thick), WALL_THICKNESS)
-    segment2 = pymunk.Segment(body, (SCREENX + thick, -thick),
-                              (SCREENX + thick, SCREENY + thick), WALL_THICKNESS)
-    segment3 = pymunk.Segment(body, (SCREENX + thick, SCREENY + thick),
-                              (-thick, SCREENY + thick), WALL_THICKNESS)
-    segment4 = pymunk.Segment(body, (-thick, SCREENY + thick),
-                              (-thick, -thick), WALL_THICKNESS)
+    WALL_THICKNESS
+    segment1 = pymunk.Segment(body, (-WALL_THICKNESS-1, -WALL_THICKNESS-1),
+                              (SCREENX + WALL_THICKNESS, -WALL_THICKNESS), WALL_THICKNESS)
+    segment2 = pymunk.Segment(body, (SCREENX + WALL_THICKNESS, -WALL_THICKNESS),
+                              (SCREENX + WALL_THICKNESS, SCREENY + WALL_THICKNESS), WALL_THICKNESS)
+    segment3 = pymunk.Segment(body, (SCREENX + WALL_THICKNESS, SCREENY + WALL_THICKNESS),
+                              (-WALL_THICKNESS, SCREENY + WALL_THICKNESS), WALL_THICKNESS )
+    segment4 = pymunk.Segment(body, (-WALL_THICKNESS-1, SCREENY + WALL_THICKNESS),
+                              (-WALL_THICKNESS, -WALL_THICKNESS), WALL_THICKNESS)
+
     segment1.collision_type = COLLISION_TYPE["OTHER"]
     segment2.collision_type = COLLISION_TYPE["OTHER"]
     segment3.collision_type = COLLISION_TYPE["OTHER"]
@@ -206,7 +207,6 @@ def ship_poke_around(space, ship, screen):
             pygame.draw.circle(screen, (0, 255, 0),
                                new_position, int(norm * 8), 1)
 
-            #target = pygame.math.Vector2(SHIP_AI[0 + i * 2] * norm+ship.position[0], SHIP_AI[1 + i * 2] * norm+ship.position[1])
             sens = pygame.math.Vector2(
                 SHIP_AI[0 + i * 2] * norm * 2, SHIP_AI[1 + i * 2] * norm * 2)
             sens.rotate_ip(ship.angle * 180 / math.pi)
@@ -295,7 +295,7 @@ def start(datafile=None, limitRun=888888, windowX=0, windowY=0):
     os.environ['SDL_VIDEO_WINDOW_POS'] = str(windowX) + "," + str(windowY)
 
     pygame.init()
-    
+
     # initialize font; must be called after 'pygame.init()' to avoid 'Font not
     # Initialized' error
     myfont = pygame.font.SysFont("monospace", 15)
@@ -378,7 +378,7 @@ def start(datafile=None, limitRun=888888, windowX=0, windowY=0):
         # clock.tick(60)
 
         # game draw
-        # space.debug_draw(draw_options)
+        space.debug_draw(draw_options)
         draw(screen, ship, balls, myfont, iteration_count, limit)
 
         pygame.display.flip()
@@ -425,7 +425,7 @@ def draw(screen, ship, meteors, myfont, iteration_count, limit):
         "Countdown  " + str(limit - iteration_count), 1, (255, 255, 0))
     screen.blit(label, (0, 45))
     label = myfont.render(
-        "Velocity   " + str(ship.velocity.get_length()), 1, (255, 255, 0))
+        "Velocita'   " + str(ship.velocity.get_length()), 1, (255, 255, 0))
     screen.blit(label, (0, 60))
 
 
