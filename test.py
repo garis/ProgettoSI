@@ -176,7 +176,9 @@ def add_border(space):
 
 def ship_poke_around(space, ship, screen):
     """check collision around ship in space all into the screen area"""
+    MOLTIPLICATORE_VETTORE_DRAW=3
     # sensori
+    line_to_draw = []
     sensor_pos = [0, 0]
     # first sensor have x1.7 range because is in front
     sensorrange = int(SENSOR_RANGE * 1.7)
@@ -208,15 +210,17 @@ def ship_poke_around(space, ship, screen):
                                new_position, int(norm * 8), 1)
 
             sens = pygame.math.Vector2(
-                SHIP_AI[0 + i * 2] * norm * 2, SHIP_AI[1 + i * 2] * norm * 2)
+                SHIP_AI[0 + i * 2] * norm * MOLTIPLICATORE_VETTORE_DRAW, SHIP_AI[1 + i * 2] * norm * MOLTIPLICATORE_VETTORE_DRAW)
             sens.rotate_ip(ship.angle * 180 / math.pi)
             target = sens + \
                 pygame.math.Vector2(ship.position[0], ship.position[1])
-            pygame.draw.line(screen, (255, 128, 0), ship.position, target)
+            line_to_draw.append(target)
 
         pygame.draw.circle(screen, (255, 255, 255),
                            ((int)(sensor_pos[0]), (int)(sensor_pos[1])), sensorrange, 1)
         sensorrange = SENSOR_RANGE
+
+    return line_to_draw
 
 
 def move_rotate_ship(ship):
@@ -376,19 +380,19 @@ def start(datafile=None, limitRun=888888, windowX=0, windowY=0):
         speed = ship.velocity.get_length()
         if speed <= MINSPEED:
             ship.apply_force_at_local_point((MINSPEED * 2 / speed, 0), (0, 0))
-        ship_poke_around(space, ship, screen)
+        force_lines=ship_poke_around(space, ship, screen)
         move_rotate_ship(ship)
 
         # game simulation
         space.step(1 / 30.0)
-        # clock.tick(60)
+        #clock.tick(60)
 
-        # game draw
+        #game draw
         #space.debug_draw(draw_options)
-        draw(screen, ship, balls, myfont, iteration_count, limit)
+        draw(screen, ship, balls, myfont, iteration_count, limit, force_lines)
 
         pygame.display.flip()
-        # print clock.get_fps()
+        #print clock.get_fps()
         iteration_count = iteration_count + 1
 
         if float(DISTANCE / (COLLISIONS + 1)) < AUTO_CLOSE_VALUE and iteration_count > 10:
@@ -397,7 +401,7 @@ def start(datafile=None, limitRun=888888, windowX=0, windowY=0):
     save_and_exit(datafile, float(DISTANCE / (COLLISIONS + 1)))
 
 
-def draw(screen, ship, meteors, myfont, iteration_count, limit):
+def draw(screen, ship, meteors, myfont, iteration_count, limit, lines):
     """draw function, all the draw calls should go in here"""
 
     point1 = pygame.math.Vector2(
@@ -420,18 +424,21 @@ def draw(screen, ship, meteors, myfont, iteration_count, limit):
         pygame.draw.circle(screen, (128, 128, 128), (int(ball.body.position[
             0]), int(ball.body.position[1])), int(ball.radius), 0)
 
+    for target in lines:
+        pygame.draw.line(screen, (255, 128, 0), ship.position, target)
+
     label = myfont.render("Distanza   " + str(int(DISTANCE)), 1, (255, 255, 0))
     screen.blit(label, (0, 0))
     label = myfont.render("Collisioni " + str(int(COLLISIONS)), 1, (255, 255, 0))
     screen.blit(label, (0, 15))
     label = myfont.render(
-        "Bonta'     " + str(float(DISTANCE / (COLLISIONS + 1))), 1, (255, 255, 0))
+        "Bonta'     " + str(int(DISTANCE / (COLLISIONS + 1))), 1, (255, 255, 0))
     screen.blit(label, (0, 30))
     label = myfont.render(
         "Velocita'  " + str(int(ship.velocity.get_length())), 1, (255, 255, 0))
     screen.blit(label, (0, 45))
     label = myfont.render(
-        "Countdown  " + str(limit - iteration_count), 1, (255, 255, 0))
+       "Countdown  " + str(limit - iteration_count), 1, (255, 255, 0))
     screen.blit(label, (0, 60))
 
 
