@@ -322,6 +322,12 @@ def start(datafile=None, limitRun=888888, windowX=0, windowY=0):
     else:
         SHIP_AI = [10, 10, 0, 0, 0, 0, 0, 0, 10, 10]
 
+    #da usare per testare una stringa risultata buona dall'allenamento
+    #text = str("7;44;1;169;444;181;312;290;184;47;").split(";")
+    #for j in range(0, len(SHIP_AI)):
+    #        SHIP_AI[j] = (float(text[j]) - 256.0) / 14.0
+
+
     print ("Simulation of", datafile, "running for", limit, "iterations")
     # print SHIP_AI
 
@@ -378,7 +384,7 @@ def start(datafile=None, limitRun=888888, windowX=0, windowY=0):
         # clock.tick(60)
 
         # game draw
-        space.debug_draw(draw_options)
+        #space.debug_draw(draw_options)
         draw(screen, ship, balls, myfont, iteration_count, limit)
 
         pygame.display.flip()
@@ -414,18 +420,18 @@ def draw(screen, ship, meteors, myfont, iteration_count, limit):
         pygame.draw.circle(screen, (128, 128, 128), (int(ball.body.position[
             0]), int(ball.body.position[1])), int(ball.radius), 0)
 
-    label = myfont.render("Distanza   " + str(DISTANCE), 1, (255, 255, 0))
+    label = myfont.render("Distanza   " + str(int(DISTANCE)), 1, (255, 255, 0))
     screen.blit(label, (0, 0))
-    label = myfont.render("Collisioni " + str(COLLISIONS), 1, (255, 255, 0))
+    label = myfont.render("Collisioni " + str(int(COLLISIONS)), 1, (255, 255, 0))
     screen.blit(label, (0, 15))
     label = myfont.render(
         "Bonta'     " + str(float(DISTANCE / (COLLISIONS + 1))), 1, (255, 255, 0))
     screen.blit(label, (0, 30))
     label = myfont.render(
-        "Countdown  " + str(limit - iteration_count), 1, (255, 255, 0))
+        "Velocita'  " + str(int(ship.velocity.get_length())), 1, (255, 255, 0))
     screen.blit(label, (0, 45))
     label = myfont.render(
-        "Velocita'   " + str(ship.velocity.get_length()), 1, (255, 255, 0))
+        "Countdown  " + str(limit - iteration_count), 1, (255, 255, 0))
     screen.blit(label, (0, 60))
 
 
