@@ -281,11 +281,11 @@ def manage_asteroid(balls, space):
             balls_to_remove.append(ball)
 
     for ball in balls_to_remove:
-        try:  # strange error
+        #try:  # strange error
             space.remove(ball, ball.body)
             balls.remove(ball)
-        except KeyError:
-            print ("ERRORE STRANO")
+        #except KeyError:
+        #    print ("ERRORE STRANO")
 
 MINSPEED = 12
 
