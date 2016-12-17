@@ -23,7 +23,7 @@ SENSOR_RANGE = 22
 SENSOR_DISTANCE = 26
 NUM_SENSORS = 5
 ANGLE_APERTURE = (2 * math.pi) / NUM_SENSORS
-WALL_THICKNESS = 10
+WALL_THICKNESS = int(SCREENX / 4)
 
 #   for every sensor:
 #   IMPULSE (a vector like (x, x))
@@ -42,7 +42,7 @@ ship_last_position = 0
 
 SHIP_POINTS_LIST = ((0, 0), (0, 0), (0, 0))
 
-#ship P.I.D.
+# ship P.I.D.
 last_error = 0
 #integral = 0
 P_FACTOR = 10
@@ -50,6 +50,7 @@ P_FACTOR = 10
 D_FACTOR = 400
 
 AUTO_CLOSE_VALUE = 2
+
 
 def add_meteor(space):
     """create meteor"""
@@ -103,7 +104,7 @@ def add_ship(space):
     convex_hull.elasticity = 0
     convex_hull.collision_type = COLLISION_TYPE["SHIP"]
     convex_hull.filter = pymunk.ShapeFilter(categories=0x2)
-    convex_hull.friction=0.5
+    convex_hull.friction = 0.5
     """segment1 = pymunk.Segment(body, (SHIP_DIM, 0),
                               (-SHIP_DIM, SHIP_DIM), SHIP_DIM / 8)
     segment2 = pymunk.Segment(body, (SHIP_DIM, 0),
@@ -150,15 +151,16 @@ def add_border(space):
     """create border"""
     body = pymunk.Body(body_type=pymunk.Body.STATIC)
     body.position = (0, 0)
-    thick = WALL_THICKNESS * 0.5
-    segment1 = pymunk.Segment(body, (-thick, -thick),
-                              (SCREENX + thick, -thick), WALL_THICKNESS)
-    segment2 = pymunk.Segment(body, (SCREENX + thick, -thick),
-                              (SCREENX + thick, SCREENY + thick), WALL_THICKNESS)
-    segment3 = pymunk.Segment(body, (SCREENX + thick, SCREENY + thick),
-                              (-thick, SCREENY + thick), WALL_THICKNESS)
-    segment4 = pymunk.Segment(body, (-thick, SCREENY + thick),
-                              (-thick, -thick), WALL_THICKNESS)
+    WALL_THICKNESS
+    segment1 = pymunk.Segment(body, (-WALL_THICKNESS-1, -WALL_THICKNESS-1),
+                              (SCREENX + WALL_THICKNESS, -WALL_THICKNESS), WALL_THICKNESS)
+    segment2 = pymunk.Segment(body, (SCREENX + WALL_THICKNESS, -WALL_THICKNESS),
+                              (SCREENX + WALL_THICKNESS, SCREENY + WALL_THICKNESS), WALL_THICKNESS)
+    segment3 = pymunk.Segment(body, (SCREENX + WALL_THICKNESS, SCREENY + WALL_THICKNESS),
+                              (-WALL_THICKNESS, SCREENY + WALL_THICKNESS), WALL_THICKNESS )
+    segment4 = pymunk.Segment(body, (-WALL_THICKNESS-1, SCREENY + WALL_THICKNESS),
+                              (-WALL_THICKNESS, -WALL_THICKNESS), WALL_THICKNESS)
+
     segment1.collision_type = COLLISION_TYPE["OTHER"]
     segment2.collision_type = COLLISION_TYPE["OTHER"]
     segment3.collision_type = COLLISION_TYPE["OTHER"]
@@ -174,7 +176,9 @@ def add_border(space):
 
 def ship_poke_around(space, ship, screen):
     """check collision around ship in space all into the screen area"""
+    MOLTIPLICATORE_VETTORE_DRAW=3
     # sensori
+    line_to_draw = []
     sensor_pos = [0, 0]
     # first sensor have x1.7 range because is in front
     sensorrange = int(SENSOR_RANGE * 1.7)
@@ -205,17 +209,19 @@ def ship_poke_around(space, ship, screen):
             pygame.draw.circle(screen, (0, 255, 0),
                                new_position, int(norm * 8), 1)
 
-            #target = pygame.math.Vector2(SHIP_AI[0 + i * 2] * norm+ship.position[0], SHIP_AI[1 + i * 2] * norm+ship.position[1])
             sens = pygame.math.Vector2(
-                SHIP_AI[0 + i * 2] * norm, SHIP_AI[1 + i * 2] * norm)
+                SHIP_AI[0 + i * 2] * norm * MOLTIPLICATORE_VETTORE_DRAW, SHIP_AI[1 + i * 2] * norm * MOLTIPLICATORE_VETTORE_DRAW)
             sens.rotate_ip(ship.angle * 180 / math.pi)
             target = sens + \
                 pygame.math.Vector2(ship.position[0], ship.position[1])
-            pygame.draw.line(screen, (255, 128, 0), ship.position, target)
+            line_to_draw.append(target)
 
         pygame.draw.circle(screen, (255, 255, 255),
                            ((int)(sensor_pos[0]), (int)(sensor_pos[1])), sensorrange, 1)
         sensorrange = SENSOR_RANGE
+
+    return line_to_draw
+
 
 def move_rotate_ship(ship):
     """rotate the ship according the trajectory"""
@@ -279,17 +285,21 @@ def manage_asteroid(balls, space):
             space.remove(ball, ball.body)
             balls.remove(ball)
         except KeyError:
-            print "ERRORE STRANO"
+            print ("ERRORE STRANO")
 
-MINSPEED=12
+MINSPEED = 12
 
-def start(datafile=None, limitRun=888888):
+
+def start(datafile=None, limitRun=888888, windowX=0, windowY=0):
     """main loop"""
     # print "Usage:"
     # print "--file:  the file containing the spaceship to simulate"
     # print "--limit: frame limit"
 
+    os.environ['SDL_VIDEO_WINDOW_POS'] = str(windowX) + "," + str(windowY)
+
     pygame.init()
+
     # initialize font; must be called after 'pygame.init()' to avoid 'Font not
     # Initialized' error
     myfont = pygame.font.SysFont("monospace", 15)
@@ -307,7 +317,7 @@ def start(datafile=None, limitRun=888888):
         try:
             in_file = open(str(datafile), "r")
         except:
-            print "Error opening file: " + datafile
+            print ("Error opening file:", datafile)
             sys.exit(-10)
         text = in_file.read().split(";")
         in_file.close()
@@ -316,10 +326,16 @@ def start(datafile=None, limitRun=888888):
     else:
         SHIP_AI = [10, 10, 0, 0, 0, 0, 0, 0, 10, 10]
 
-    print "Simulation of", datafile, "running for", limit, "iterations"
+    #da usare per testare una stringa risultata buona dall'allenamento
+    #text = str("7;44;1;169;444;181;312;290;184;47;").split(";")
+    #for j in range(0, len(SHIP_AI)):
+    #        SHIP_AI[j] = (float(text[j]) - 256.0) / 14.0
+
+
+    print ("Simulation of", datafile, "running for", limit, "iterations")
     # print SHIP_AI
 
-    screen = pygame.display.set_mode((SCREENX, SCREENX))
+    screen = pygame.display.set_mode((SCREENX, SCREENX), pygame.NOFRAME)
     pygame.display.set_caption("Tests")
     pymunk.pygame_util.positive_y_is_up = False
     clock = pygame.time.Clock()
@@ -363,17 +379,17 @@ def start(datafile=None, limitRun=888888):
 
         speed = ship.velocity.get_length()
         if speed <= MINSPEED:
-            ship.apply_force_at_local_point((MINSPEED*2/speed, 0), (0, 0))
-        ship_poke_around(space, ship, screen)
+            ship.apply_force_at_local_point((MINSPEED * 2 / speed, 0), (0, 0))
+        force_lines=ship_poke_around(space, ship, screen)
         move_rotate_ship(ship)
 
         # game simulation
         space.step(1 / 30.0)
         #clock.tick(60)
 
-        # game draw
-        # space.debug_draw(draw_options)
-        draw(screen, ship, balls, myfont, iteration_count, limit)
+        #game draw
+        #space.debug_draw(draw_options)
+        draw(screen, ship, balls, myfont, iteration_count, limit, force_lines)
 
         pygame.display.flip()
         #print clock.get_fps()
@@ -385,7 +401,7 @@ def start(datafile=None, limitRun=888888):
     save_and_exit(datafile, float(DISTANCE / (COLLISIONS + 1)))
 
 
-def draw(screen, ship, meteors, myfont, iteration_count, limit):
+def draw(screen, ship, meteors, myfont, iteration_count, limit, lines):
     """draw function, all the draw calls should go in here"""
 
     point1 = pygame.math.Vector2(
@@ -408,18 +424,21 @@ def draw(screen, ship, meteors, myfont, iteration_count, limit):
         pygame.draw.circle(screen, (128, 128, 128), (int(ball.body.position[
             0]), int(ball.body.position[1])), int(ball.radius), 0)
 
-    label = myfont.render("Distanza   " + str(DISTANCE), 1, (255, 255, 0))
+    for target in lines:
+        pygame.draw.line(screen, (255, 128, 0), ship.position, target)
+
+    label = myfont.render("Distanza   " + str(int(DISTANCE)), 1, (255, 255, 0))
     screen.blit(label, (0, 0))
-    label = myfont.render("Collisioni " + str(COLLISIONS), 1, (255, 255, 0))
+    label = myfont.render("Collisioni " + str(int(COLLISIONS)), 1, (255, 255, 0))
     screen.blit(label, (0, 15))
     label = myfont.render(
-        "Bonta'     " + str(float(DISTANCE / (COLLISIONS + 1))), 1, (255, 255, 0))
+        "Bonta'     " + str(int(DISTANCE / (COLLISIONS + 1))), 1, (255, 255, 0))
     screen.blit(label, (0, 30))
     label = myfont.render(
-        "Countdown  " + str(limit-iteration_count), 1, (255, 255, 0))
+        "Velocita'  " + str(int(ship.velocity.get_length())), 1, (255, 255, 0))
     screen.blit(label, (0, 45))
     label = myfont.render(
-        "Velocity   " + str(ship.velocity.get_length()), 1, (255, 255, 0))
+       "Countdown  " + str(limit - iteration_count), 1, (255, 255, 0))
     screen.blit(label, (0, 60))
 
 
