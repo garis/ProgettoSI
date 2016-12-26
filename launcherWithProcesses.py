@@ -27,13 +27,13 @@ import test
 # 40<50 Yes, quindi scelgo individuo2
 
 # quanti individui (estratti a random con la roulette) preservo inalterati
-SURVIVORS = 14
+SURVIVORS = 5
 # quanti individui (estratti a random con la roulette) sono da creare
 # sfruttando la precedente generazione (combinandone i geni)
 CHILDS = SURVIVORS * 3
 # quanti individui (estratti a random con la roulette) vengono afflitti da
 # una mutazione
-MUTATIONS = 72
+MUTATIONS = 32
 POPULATION = SURVIVORS + CHILDS + MUTATIONS  # quanti individui ci sono in tutto
 
 NUMBER_THREADS = 4  # quante esecuzioni contemporanee sono ammesse

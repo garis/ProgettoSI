@@ -17,7 +17,7 @@ MAX_ASTEROIDS = 8
 MAX_ASTEROID_MASS = 15
 MAX_ASTEROID_IMPULSE = int(MAX_ASTEROID_MASS * 3.2)
 MAX_ASTEROID_ROTATION = 5
-SHIP_TORQUE_LIMIT = 65
+SHIP_TORQUE_LIMIT = 30
 SHIP_DIM = 17
 SENSOR_RANGE = 22
 SENSOR_DISTANCE = 26
@@ -244,6 +244,13 @@ def move_rotate_ship(ship):
     ship_angle_direction = math.atan2(direction.y, direction.x)
 
     current_error = ship_angle_direction - ship.angle
+    if(current_error > math.pi):
+        current_error = current_error - 2*math.pi
+    else:
+        if(current_error < -math.pi):
+            current_error = current_error + 2*math.pi
+        else:
+            current_error = current_error#do nothing
 
     #integral = integral + current_error
     deriv = current_error - last_error
@@ -331,7 +338,6 @@ def start(datafile=None, limitRun=888888, windowX=0, windowY=0):
     #for j in range(0, len(SHIP_AI)):
     #        SHIP_AI[j] = (float(text[j]) - 256.0) / 14.0
 
-
     print ("Simulation of", datafile, "running for", limit, "iterations")
     # print SHIP_AI
 
@@ -385,7 +391,7 @@ def start(datafile=None, limitRun=888888, windowX=0, windowY=0):
 
         # game simulation
         space.step(1 / 30.0)
-        #clock.tick(60)
+        #clock.tick(200)
 
         #game draw
         #space.debug_draw(draw_options)
