@@ -244,13 +244,13 @@ def move_rotate_ship(ship):
     ship_angle_direction = math.atan2(direction.y, direction.x)
 
     current_error = ship_angle_direction - ship.angle
-    if(current_error > math.pi):
-        current_error = current_error - 2*math.pi
-    else:
-        if(current_error < -math.pi):
-            current_error = current_error + 2*math.pi
-        else:
-            current_error = current_error#do nothing
+    #if(current_error > math.pi):
+    #    current_error = current_error - 2*math.pi
+    #else:
+    #    if(current_error < -math.pi):
+    #        current_error = current_error + 2*math.pi
+    #    else:
+    #        current_error = current_error#do nothing
 
     #integral = integral + current_error
     deriv = current_error - last_error
