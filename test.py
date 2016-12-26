@@ -241,16 +241,15 @@ def move_rotate_ship(ship):
     direction = ship.position - ship_last_position
     DISTANCE = DISTANCE + \
         math.sqrt(direction.x * direction.x + direction.y * direction.y)
-    ship_angle_direction = math.atan2(direction.y, direction.x)
 
-    current_error = ship_angle_direction - ship.angle
-    #if(current_error > math.pi):
-    #    current_error = current_error - 2*math.pi
-    #else:
-    #    if(current_error < -math.pi):
-    #        current_error = current_error + 2*math.pi
-    #    else:
-    #        current_error = current_error#do nothing
+    direction = pygame.math.Vector2(direction.x, direction.y)
+    ship_angle = pygame.math.Vector2(math.cos(ship.angle), math.sin(ship.angle))
+    current_error = math.atan2(direction[1],direction[0])-math.atan2(ship_angle[1],ship_angle[0])
+
+    if current_error < -math.pi:
+        current_error = current_error + 2 * math.pi
+    if current_error > math.pi:
+        current_error = current_error - 2 * math.pi
 
     #integral = integral + current_error
     deriv = current_error - last_error
@@ -262,7 +261,6 @@ def move_rotate_ship(ship):
         torque = SHIP_TORQUE_LIMIT
     ship.torque = torque
     ship_last_position = ship.position
-
 
 def move_with_mouse(position, bodysim):
     """move objectSim to the position"""
@@ -381,6 +379,10 @@ def start(datafile=None, limitRun=888888, windowX=0, windowY=0):
 
         # game logic
         manage_asteroid(balls, space)
+
+        #muove un asteroide per debug
+        #balls[0].body.position=pygame.mouse.get_pos()
+
         #move_with_mouse(pygame.mouse.get_pos(), ship)
 
         speed = ship.velocity.get_length()
@@ -391,7 +393,7 @@ def start(datafile=None, limitRun=888888, windowX=0, windowY=0):
 
         # game simulation
         space.step(1 / 30.0)
-        #clock.tick(200)
+        #clock.tick(250)
 
         #game draw
         #space.debug_draw(draw_options)
