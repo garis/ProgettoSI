@@ -17,7 +17,7 @@ MAX_ASTEROIDS = 7
 MAX_ASTEROID_MASS = 15
 MAX_ASTEROID_IMPULSE = int(MAX_ASTEROID_MASS * 3.2)
 MAX_ASTEROID_ROTATION = 5
-SHIP_TORQUE_LIMIT = 30
+SHIP_TORQUE_LIMIT = 60
 SHIP_DIM = 17
 SENSOR_RANGE = 22
 SENSOR_DISTANCE = 26
@@ -393,7 +393,7 @@ def start(datafile=None, limitRun=888888, windowX=0, windowY=0):
 
         # game simulation
         space.step(1 / 30.0)
-        #clock.tick(250)
+        #clock.tick(300)
 
         #game draw
         #space.debug_draw(draw_options)
