@@ -11,6 +11,11 @@
 
 Done!
 
+Videos:
+Initial behavior: https://youtu.be/i4d1HhdtHLk
+Final behavior: https://youtu.be/5XGFN5xoCM8
+Training timelapse: https://youtu.be/8xFRPgpYhqs
+
 ### Run the program:
 
 Start "launcherWithProcesses.py" (like `python3 launcherWithProcesses.py` and play with the parameters 
