@@ -13,8 +13,11 @@ Done!
 
 Videos:
 Initial behavior: https://youtu.be/i4d1HhdtHLk
+
 Final behavior: https://youtu.be/5XGFN5xoCM8
+
 Training timelapse: https://youtu.be/8xFRPgpYhqs
+
 
 ### Run the program:
 
